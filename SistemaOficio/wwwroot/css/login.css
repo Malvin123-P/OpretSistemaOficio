@@ -1,0 +1,39 @@
+﻿.login-body {
+    background: linear-gradient(to right, #003366, #005599);
+    height: 100vh;
+    margin: 0;
+}
+
+.login-main {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}
+
+.login-container {
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    width: 100%;
+    max-width: 400px;
+}
+
+.titulo-login {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    color: #003366;
+}
+
+.btn-ingresar {
+    width: 100%;
+    margin-top: 1rem;
+}
+
+.link-restablecer {
+    display: block;
+    margin-top: 1rem;
+    text-align: center;
+    color: #005599;
+}

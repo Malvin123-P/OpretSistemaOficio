@@ -1,0 +1,506 @@
+﻿@model List<OfiGest.Models.TipoDatoResumen>
+
+@functions {
+    public string GenerarColorInstitucional(int index)
+    {
+        var baseColors = new[] {
+        (r: 61, g: 111, b: 173),
+        (r: 93, g: 173, b: 226),
+        (r: 72, g: 201, b: 176),
+        (r: 46, g: 134, b: 193),
+        (r: 40, g: 180, b: 99),
+        (r: 30, g: 132, b: 73)
+    };
+
+        var color = baseColors[index % baseColors.Length];
+
+        int factor = (index / baseColors.Length) % 3;
+        int r = Math.Min(color.r + factor * 10, 255);
+        int g = Math.Min(color.g + factor * 10, 255);
+        int b = Math.Min(color.b + factor * 10, 255);
+
+        return $"#{r:X2}{g:X2}{b:X2}";
+    }
+}
+
+@{
+    ViewData["Title"] = "Estadísticas por Tipo de Oficio";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var colores = Model.Select((m, i) => GenerarColorInstitucional(i)).ToList();
+}
+
+<style>
+    .card-adjusted {
+        height: 700px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        margin-top: 1rem;
+        margin-bottom: 2rem;
+        padding: 2rem;
+    }
+
+    .grafico-container {
+        overflow-y: auto;
+        height: 500px;
+        margin-top: 15px;
+    }
+
+    .chart-selector {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin-bottom: 1rem;
+    }
+
+    .btn-verde {
+        background-color: #0B5926;
+        color: white;
+        font-weight: bold;
+        border-radius: 6px;
+        padding: 0.5rem 1rem;
+        transition: background-color 0.3s ease;
+        border: none;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+        .btn-verde:hover,
+        .btn-verde.active {
+            background-color: #09491F;
+            color: white;
+        }
+
+    .icono-exportar {
+        font-size: 1.5rem;
+        color: #3D6FAD;
+        cursor: pointer;
+        margin-left: auto;
+        margin-right: 1rem;
+        transition: color 0.3s ease;
+    }
+
+        .icono-exportar:hover {
+            color: #2f5c91;
+        }
+
+
+    @@media (max-width: 1200px) {
+        .card-adjusted
+
+    {
+        padding: 1.5rem;
+    }
+
+    }
+
+    @@media (max-width: 992px) {
+        .card-adjusted
+
+    {
+        padding: 1rem;
+        height: 650px;
+    }
+
+    .grafico-container {
+        height: 450px;
+    }
+
+    h4 {
+        font-size: 1.5rem;
+    }
+
+    }
+
+    @@media (max-width: 768px) {
+        .card-adjusted
+
+    {
+        padding: 0.75rem;
+        height: 600px;
+        margin-top: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .grafico-container {
+        height: 400px;
+        margin-top: 10px;
+    }
+
+    h4 {
+        font-size: 1.25rem;
+        text-align: center;
+    }
+
+    .btn-verde {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.9rem;
+    }
+
+    .chart-selector {
+        gap: 0.3rem;
+        margin-bottom: 0.8rem;
+    }
+
+    }
+
+    @@media (max-width: 576px) {
+        .card-adjusted
+
+    {
+        padding: 0.5rem;
+        height: 550px;
+    }
+
+    .container-fluid {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+
+    .grafico-container {
+        height: 350px;
+    }
+
+    h4 {
+        font-size: 1.1rem;
+    }
+
+    .btn-verde {
+        padding: 0.3rem 0.6rem;
+        font-size: 0.8rem;
+        flex: 1;
+        min-width: 45%;
+        margin: 2px;
+    }
+
+    .chart-selector {
+        gap: 0.2rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .btn-verde i {
+        margin-right: 3px !important;
+        font-size: 0.8rem;
+    }
+
+    }
+
+    @@media (max-width: 768px) {
+        .grafico-container
+
+    {
+        position: relative;
+    }
+
+    #graficoTipos {
+        max-width: 100%;
+    }
+
+    }
+
+
+    @@media (max-width: 576px) {
+        .chartjs-legend
+
+    {
+        transform: scale(0.8);
+        transform-origin: left top;
+    }
+
+    }
+
+    @@media (max-width: 768px) {
+        .btn-verde
+
+    {
+        min-height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .icono-exportar {
+        min-height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+    }
+
+    }
+
+
+    @@media (max-width: 480px) {
+        .grafico-container
+
+    {
+        height: 300px;
+    }
+
+    .card-adjusted {
+        height: 500px;
+    }
+
+    }
+
+
+   @@media (max-width: 360px) {
+        .btn-verde
+
+    {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.4rem;
+    }
+
+    .chart-selector {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .grafico-container {
+        height: 280px;
+    }
+
+    }
+
+    .mobile-chart-container {
+        position: relative;
+        width: 100%;
+    }
+
+    @@media (max-width: 768px) {
+        .mobile-chart-container
+
+    {
+        overflow-x: auto;
+    }
+
+    #graficoTipos {
+        min-width: 300px;
+    }
+
+    }
+</style>
+
+<div class="container-fluid d-flex flex-column compact-container">
+    <h4 class="mt-3 mb-3">Estadísticas por Tipo de Oficio</h4>
+    <div class="card shadow-sm border-0 p-4 card-adjusted">
+        <div class="d-flex flex-wrap gap-3 align-items-end mb-3 ms-auto">
+            <div class="chart-selector">
+                <button class="btn btn-verde active" data-chart-type="bar" title="Gráfico de barras">
+                    <i class="fas fa-chart-bar me-2"></i><span class="button-text">Barras</span>
+                </button>
+                <button class="btn btn-verde" data-chart-type="pie" title="Gráfico circular">
+                    <i class="fas fa-chart-pie me-2"></i><span class="button-text">Circular</span>
+                </button>
+                <button class="btn btn-verde" data-chart-type="doughnut" title="Gráfico de dona">
+                    <i class="fas fa-donate me-2"></i><span class="button-text">Dona</span>
+                </button>
+                <button class="btn btn-verde" data-chart-type="polarArea" title="Gráfico polar">
+                    <i class="fas fa-bullseye me-2"></i><span class="button-text">Polar</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="container-scroll mb-3">
+            <div class="grafico-container mobile-chart-container">
+                <canvas id="graficoTipos"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const labels = @Html.Raw(Json.Serialize(Model.Select(m => m.NombreTipo)));
+        const data = @Html.Raw(Json.Serialize(Model.Select(m => m.Cantidad)));
+        const backgroundColors = @Html.Raw(Json.Serialize(colores));
+
+        let currentChart = null;
+
+        function getResponsiveOptions(tipo) {
+            const isMobile = window.innerWidth <= 768;
+            const isSmallMobile = window.innerWidth <= 480;
+
+            const baseOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: tipo !== 'bar',
+                        position: isMobile ? 'bottom' : 'right',
+                        labels: {
+                            padding: isMobile ? 10 : 20,
+                            usePointStyle: true,
+                            pointStyle: 'circle',
+                            font: {
+                                size: isSmallMobile ? 10 : (isMobile ? 11 : 12),
+                                weight: '500'
+                            },
+                            boxWidth: isMobile ? 10 : 12
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleFont: {
+                            size: isSmallMobile ? 12 : (isMobile ? 13 : 14),
+                            weight: 'bold'
+                        },
+                        bodyFont: {
+                            size: isSmallMobile ? 11 : (isMobile ? 12 : 13)
+                        },
+                        padding: isMobile ? 8 : 12,
+                        cornerRadius: 6,
+                        callbacks: {
+                            label: function (context) {
+                                const label = context.label || context.chart.data.labels[context.dataIndex] || 'Sin etiqueta';
+                                let value = context.raw ?? context.parsed;
+                                if (typeof value === 'object') {
+                                    value = value.y ?? value.x ?? 0;
+                                }
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const porcentaje = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0';
+                                return `${label}: ${value} (${porcentaje}%)`;
+                            }
+                        }
+                    }
+                }
+            };
+
+            if (tipo === 'bar') {
+                baseOptions.scales = {
+                    x: {
+                        beginAtZero: true,
+                        ticks: {
+                            display: !isMobile,
+                            font: {
+                                size: isSmallMobile ? 10 : (isMobile ? 11 : 12),
+                                weight: 'bold'
+                            },
+                            color: '#333',
+                            maxRotation: isMobile ? 45 : 0
+                        },
+                        grid: { display: false }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            display: true,
+                            font: {
+                                size: isSmallMobile ? 10 : (isMobile ? 11 : 12),
+                                weight: 'bold'
+                            },
+                            color: '#333'
+                        },
+                        grid: { display: !isSmallMobile }
+                    }
+                };
+            }
+
+            return baseOptions;
+        }
+
+        function crearGrafico(tipo) {
+            const ctx = document.getElementById('graficoTipos').getContext('2d');
+            if (currentChart) {
+                currentChart.destroy();
+            }
+
+            const config = {
+                type: tipo,
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: backgroundColors,
+                        borderColor: tipo === 'bar' ? backgroundColors.map(c => c + '80') : backgroundColors,
+                        borderWidth: window.innerWidth <= 576 ? 1 : 2,
+                        borderRadius: tipo === 'bar' ? (window.innerWidth <= 576 ? 2 : 4) : 0,
+                        hoverOffset: window.innerWidth <= 576 ? 10 : 15
+                    }]
+                },
+                options: getResponsiveOptions(tipo)
+            };
+
+            currentChart = new Chart(ctx, config);
+            ajustarTextoBotones();
+        }
+
+        function ajustarTextoBotones() {
+            const buttons = document.querySelectorAll('.button-text');
+            const isVerySmall = window.innerWidth <= 360;
+
+            buttons.forEach(button => {
+                if (isVerySmall) {
+                    const text = button.textContent;
+                    if (text === 'Barras') button.textContent = 'Bar';
+                    else if (text === 'Circular') button.textContent = 'Circ';
+                    else if (text === 'Dona') button.textContent = 'Dona';
+                    else if (text === 'Polar') button.textContent = 'Pol';
+                } else {
+                    const buttonElement = button.closest('button');
+                    const chartType = buttonElement.getAttribute('data-chart-type');
+                    if (chartType === 'bar') button.textContent = 'Barras';
+                    else if (chartType === 'pie') button.textContent = 'Circular';
+                    else if (chartType === 'doughnut') button.textContent = 'Dona';
+                    else if (chartType === 'polarArea') button.textContent = 'Polar';
+                }
+            });
+        }
+
+        function ajustarAlturaContenedor() {
+            const card = document.querySelector('.card-adjusted');
+            const graficoContainer = document.querySelector('.grafico-container');
+
+            if (window.innerWidth <= 480) {
+                card.style.height = '500px';
+                graficoContainer.style.height = '300px';
+            } else if (window.innerWidth <= 576) {
+                card.style.height = '550px';
+                graficoContainer.style.height = '350px';
+            } else if (window.innerWidth <= 768) {
+                card.style.height = '600px';
+                graficoContainer.style.height = '400px';
+            } else if (window.innerWidth <= 992) {
+                card.style.height = '650px';
+                graficoContainer.style.height = '450px';
+            } else {
+                card.style.height = '700px';
+                graficoContainer.style.height = '500px';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            ajustarAlturaContenedor();
+            crearGrafico('bar');
+
+            document.querySelectorAll('[data-chart-type]').forEach(button => {
+                button.addEventListener('click', function () {
+                    document.querySelectorAll('[data-chart-type]').forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    crearGrafico(this.getAttribute('data-chart-type'));
+                });
+            });
+
+  
+            if ('ontouchstart' in window) {
+                document.querySelectorAll('.btn-verde').forEach(btn => {
+                    btn.style.minHeight = '44px';
+                });
+            }
+
+     
+            document.querySelectorAll('[title]').forEach(el => el.removeAttribute('title'));
+        });
+
+        window.addEventListener('resize', function () {
+            if (currentChart) {
+                currentChart.destroy();
+                const activeButton = document.querySelector('[data-chart-type].active');
+                crearGrafico(activeButton ? activeButton.getAttribute('data-chart-type') : 'bar');
+            }
+            ajustarAlturaContenedor();
+        });
+    </script>
+}

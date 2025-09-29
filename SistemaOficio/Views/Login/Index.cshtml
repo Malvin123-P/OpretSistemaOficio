@@ -1,0 +1,349 @@
+﻿ @model OfiGest.Models.LoginModel
+@{
+    Layout = null;
+    ViewData["Title"] = "Iniciar sesión";
+}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-store" />
+
+    <title>Iniciar sesión - OfiGest</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" />
+    <link rel="icon" type="image/x-icon" href="/images/logoOPRETFooter.png">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --color-primary: #3D6FAD;
+            --color-primary-dark: #2f5c91;
+            --color-success: #0B5926;
+            --color-danger: #dc3545;
+            --transition-speed: 0.3s;
+        }
+
+        body {
+            background-color: white;
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .main-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+        }
+
+        .card-login {
+            width: 100%;
+            max-width: 500px;
+            margin: auto;
+            border: 1px solid #ccc;
+            border-radius: 12px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+            .card-login:hover {
+                transform: translateY(-5px);
+            }
+
+        .card-body {
+            padding: 2rem;
+        }
+
+        .form-group {
+            position: relative;
+            margin-bottom: 5px;
+        }
+
+            .form-group i {
+                position: absolute;
+                top: 12px;
+                left: 12px;
+                font-size: 18px;
+                color: #333;
+            }
+
+        .form-control {
+            padding-left: 40px;
+            height: 45px;
+            font-size: 16px;
+            border-radius: 6px;
+        }
+
+        .btn-login {
+            background-color: var(--color-primary);
+            color: white;
+            width: 100%;
+            padding: 0.8rem;
+            font-weight: bold;
+            border-radius: 8px;
+            transition: background-color var(--transition-speed);
+            border: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+            .btn-login:hover {
+                background-color: var(--color-primary-dark);
+                color: white;
+            }
+
+            .btn-login:disabled {
+                background-color: #6c757d;
+                cursor: not-allowed;
+            }
+
+        .progress-container {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: transparent;
+            border-radius: 0 0 8px 8px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            border-radius: 0 0 8px 8px;
+            transition: width 0.4s ease;
+        }
+
+        .btn-content {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .text-danger {
+            font-size: 13px;
+            text-align: left;
+            display: block;
+            margin-left: 5px;
+            margin-top: 2px;
+            color: var(--color-danger);
+        }
+
+        .titulo-app {
+            font-size: 2rem;
+            color: #2f5c91;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 600;
+        }
+
+        .subtitulo-app {
+            font-weight: 400;
+            font-size: 1.1rem;
+            color: #555;
+        }
+
+        .footer-bar {
+            height: 100px;
+            background-color: var(--color-primary-dark);
+            margin-top: auto;
+        }
+
+        .fade-out {
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            pointer-events: none;
+        }
+
+        .custom-progress {
+            background-color: #3D6FAD;
+        }
+
+        .link-recuperar {
+            display: block;
+            margin-top: 10px;
+            color: black;
+            text-decoration: none;
+            font-size: 16px;
+        }
+
+            .link-recuperar:hover {
+                text-decoration: underline;
+            }
+
+      
+        .form-check-input:checked {
+            background-color: var(--color-success);
+            border-color: var(--color-success);
+        }
+
+     
+        .form-check-input:focus {
+            box-shadow: 0 0 0 0.25rem rgba(11, 89, 38, 0.25);
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="card card-login">
+            <div class="card-body text-center">
+                <form id="loginForm" asp-action="Index" asp-controller="Login" method="post" class="d-grid gap-2" autocomplete="on">
+                    @Html.AntiForgeryToken()  
+                 
+                    <h1 class="titulo-app mb-0">OfiGest</h1>
+                    <h5 class="subtitulo-app text-muted">Gestión de Oficios Institucionales</h5>
+
+                    @if (TempData["RestablecimientoExitoso"] != null)
+                    {
+                        <div id="mensajeExito" class="alert alert-success text-center mt-3" role="alert">
+                            <i class="bi bi-check-circle-fill me-2"></i> @TempData["RestablecimientoExitoso"]
+                        </div>
+                    }
+
+                    @if (TempData["Error"] != null)
+                    {
+                        <div id="mensajeError" class="alert alert-danger text-center mt-3" role="alert">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i> @TempData["Error"]
+                        </div>
+                    }
+
+
+                    <div class="form-group mt-3">
+                        <i class="bi bi-envelope"></i>
+                        <input asp-for="Correo" class="form-control" id="Correo" name="Correo" placeholder="Correo Institucional" autocomplete="username" />
+                        <span asp-validation-for="Correo" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mt-3">
+                        <i class="bi bi-lock"></i>
+                        <input asp-for="Contraseña" class="form-control" id="Contraseña" placeholder="***********" type="password" autocomplete="current-password" />
+                        <span asp-validation-for="Contraseña" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-check form-switch text-start mb-0">
+                        <input asp-for="Recuerdame" class="form-check-input" type="checkbox" id="flexSwitchCheckDefault" />
+                        <label class="form-check-label" for="flexSwitchCheckDefault">Recuérdame</label>
+                    </div>
+
+                    <button type="submit" id="btnLogin" class="btn btn-login d-flex justify-content-center align-items-center gap-2">
+                        <div class="btn-content">
+                            <span id="btnText">Iniciar sesión</span>
+                        </div>
+                        <div class="progress-container">
+                            <div class="progress-bar custom-progress" id="loginProgress"></div>
+                        </div>
+                    </button>
+
+                    <a asp-controller="Cuenta" asp-action="SolicitarRestablecimiento" class="link-recuperar">¿Olvidaste tu contraseña?</a>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer-bar"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+    
+            const correoInput = document.getElementById('Correo');
+            const contraseñaInput = document.getElementById('Contraseña');
+            const recuerdameSwitch = document.getElementById('flexSwitchCheckDefault');
+            const togglePassword = document.getElementById('togglePassword');
+            const loginForm = document.getElementById('loginForm');
+            const btnLogin = document.getElementById('btnLogin');
+            const btnText = document.getElementById('btnText');
+            const loginProgress = document.getElementById('loginProgress');
+            const storageKey = 'correoGuardado';
+
+            // Restaurar correo si existe en localStorage
+            const correoGuardado = localStorage.getItem(storageKey);
+            if (correoGuardado && correoInput) {
+                correoInput.value = correoGuardado;
+                recuerdameSwitch.checked = true;
+              
+            }
+
+            // Manejar cambios en el campo de correo
+            if (correoInput) {
+                correoInput.addEventListener('input', function () {
+                    if (recuerdameSwitch.checked) {
+                        localStorage.setItem(storageKey, correoInput.value);
+                    }
+                });
+            }
+
+            // Manejar cambios en el switch "Recuérdame"
+            if (recuerdameSwitch) {
+                recuerdameSwitch.addEventListener('change', function () {
+                    if (recuerdameSwitch.checked && correoInput.value) {
+                        localStorage.setItem(storageKey, correoInput.value);
+                    } else {
+                        localStorage.removeItem(storageKey);
+                    }
+                });
+            }
+
+           
+            // Validación del formulario antes de enviar
+            if (loginForm) {
+                loginForm.addEventListener('submit', function (e) {
+                    // Mostrar barra de progreso y deshabilitar botón
+                    btnText.textContent = 'Iniciando sesión...';
+                    btnLogin.disabled = true;
+
+                    // Simular progreso de inicio de sesión
+                    simularProgreso();
+                });
+            }
+
+            // Función para simular el progreso de inicio de sesión
+            function simularProgreso() {
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += 5;
+                    loginProgress.style.width = progress + '%';
+
+                    if (progress >= 100) {
+                        clearInterval(interval);
+                        // El formulario se enviará automáticamente después de esto
+                    }
+                }, 150);
+            }
+
+            // Cierre animado de mensajes
+            const mensajeExito = document.getElementById("mensajeExito");
+            const mensajeError = document.getElementById("mensajeError");
+
+            if (mensajeExito) {
+                setTimeout(() => {
+                    mensajeExito.classList.add("fade-out");
+                    setTimeout(() => mensajeExito.remove(), 500);
+                }, 5000);
+            }
+
+            if (mensajeError) {
+                setTimeout(() => {
+                    mensajeError.classList.add("fade-out");
+                    setTimeout(() => mensajeError.remove(), 500);
+                }, 5000);
+            }
+
+        });
+    </script>
+</body>
+</html> 
