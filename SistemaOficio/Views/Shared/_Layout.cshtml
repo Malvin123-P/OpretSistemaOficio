@@ -288,7 +288,6 @@
         }
 
         .sin-notificaciones-usuario {
-        padding: 40px 20px;
         text-align: center;
         color: #6c757d;
         }
@@ -487,7 +486,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
         <script>
-            // Gestión de notificaciones - VERSIÓN COMPLETAMENTE AISLADA
+            // Gestión de notificaciones 
             const NotificacionesManager = {
                 async cargar() {
                     try {
@@ -621,9 +620,9 @@
                 }
             };
 
-            // >>>>> FUNCIÓN COMPLETAMENTE AISLADA <<<<<
+    
             function cargarNotificacionesUsuario() {
-                // Solo cargar notificaciones - NO TOCAR NADA MÁS
+   
                 NotificacionesManager.cargar();
             }
 
@@ -675,7 +674,6 @@
                 Toast.fire({ icon: tipo, title: mensaje });
             }
 
-            // >>>>> PROTECCIÓN GLOBAL CONTRA INTERFERENCIAS <<<<<
             (function() {
                 // Bloquear cualquier intento de modificar selectpicker globalmente
                 const originalSelectpicker = $.fn.selectpicker;
@@ -684,7 +682,7 @@
                 $.fn.selectpicker = function(arg) {
                     // Si alguien intenta hacer 'refresh' globalmente, bloquearlo
                     if (arg === 'refresh' && selectpickerBlocked) {
-                        console.log('🔒 Selectpicker refresh bloqueado para proteger formularios');
+                        console.log(' Selectpicker refresh bloqueado para proteger formularios');
                         return this;
                     }
                     return originalSelectpicker.apply(this, arguments);
@@ -727,7 +725,7 @@
                         });
                     }
 
-                    // Cargar notificaciones inicial después de 2 segundos (dar tiempo a que carguen las vistas)
+           
                     setTimeout(() => cargarNotificacionesUsuario(), 2000);
 
                     // Cargar notificaciones cada 60 segundos
