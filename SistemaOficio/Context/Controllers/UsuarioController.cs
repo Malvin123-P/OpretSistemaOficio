@@ -12,13 +12,11 @@ namespace OfiGest.Controllers
     public class UsuarioController : Controller
     {
         private readonly UsuarioManager _usuarioManager;
-        private readonly IConfiguration _config;
         private readonly IWebHostEnvironment _environment;
 
-        public UsuarioController(UsuarioManager usuarioManager, IConfiguration config, IWebHostEnvironment environment)
+        public UsuarioController(UsuarioManager usuarioManager, IWebHostEnvironment environment)
         {
             _usuarioManager = usuarioManager;
-            _config = config;
             _environment = environment;
         }
 
@@ -114,7 +112,7 @@ namespace OfiGest.Controllers
                 return View(model);
             }
 
-            var dominiosPermitidos = _config.GetSection("SeguridadCorreo:DominiosPermitidos").Get<List<string>>();
+            var dominiosPermitidos = Environment.GetEnvironmentVariable("SeguridadCorreo_DominiosPermitidos").Split();
 
             bool correoValido = dominiosPermitidos.Any(d => model.Correo.EndsWith(d, StringComparison.OrdinalIgnoreCase));
 
@@ -198,7 +196,6 @@ namespace OfiGest.Controllers
                 }
             }
 
-            //var dominiosPermitidos = _config.GetSection("SeguridadCorreo:DominiosPermitidos").Get<List<string>>();
             var dominiosPermitidos = Environment.GetEnvironmentVariable("DominiosPermitidos").Split(',');
             bool correoValido = dominiosPermitidos.Any(d => model.Correo.EndsWith(d, StringComparison.OrdinalIgnoreCase));
 

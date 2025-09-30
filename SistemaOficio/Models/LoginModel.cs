@@ -1,6 +1,4 @@
-﻿using Microsoft.Extensions.Options;
-using OfiGest.Utilities;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace OfiGest.Models
 {
