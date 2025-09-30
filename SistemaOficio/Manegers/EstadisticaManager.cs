@@ -2,10 +2,6 @@
 using OfiGest.Context;
 using OfiGest.Entities;
 using OfiGest.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace OfiGest.Managers
 {

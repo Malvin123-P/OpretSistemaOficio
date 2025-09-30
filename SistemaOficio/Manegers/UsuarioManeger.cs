@@ -1,8 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using OfiGest.Context;
 using OfiGest.Entities;
-using OfiGest.Managers;
 using OfiGest.Manegers;
 using OfiGest.Models;
 using OfiGest.Utilities;

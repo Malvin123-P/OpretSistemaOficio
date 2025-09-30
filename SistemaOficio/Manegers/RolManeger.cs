@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using OfiGest.Context;
-using OfiGest.Entities;
 using OfiGest.Models;
 
 namespace OfiGest.Manegers

@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Mvc;
 using OfiGest.Manegers;
 using OfiGest.Models;
-using OfiGest.Utilities;
 
 namespace OfiGest.Context.Controllers
 {

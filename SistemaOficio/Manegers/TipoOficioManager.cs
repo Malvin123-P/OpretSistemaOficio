@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using OfiGest.Context;
 using OfiGest.Entities;
 using OfiGest.Models;
-using OfiGest.Utilities;
 
 namespace OfiGest.Manegers
 {
