@@ -36,7 +36,7 @@ namespace OfiGest.Context.Controllers
         {
             if (!ModelState.IsValid) return View(model);
 
-            var dominiosPermitidos = Environment.GetEnvironmentVariable("SeguridadCorreo_DominiosPermitidos").Split(  );
+            var dominiosPermitidos = Environment.GetEnvironmentVariable("SeguridadCorreo_DominiosPermitidos").Split(',');
 
             var correoNormalizado = model.Correo.Trim().ToLower();
         
