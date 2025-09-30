@@ -111,6 +111,7 @@
 </style>
 
 
+
 <form asp-action="Edit" method="post" autocomplete="off" id="editForm" enctype="multipart/form-data">
     <div class="container-fluid d-flex flex-column compact-container">
         <input type="hidden" asp-for="Id" />
@@ -147,21 +148,18 @@
                     <label asp-for="Nombre" class="form-label">@Html.DisplayNameFor(m => m.Nombre)</label>
                     <span class="text-danger" title="Campo obligatorio">*</span>
                     <input asp-for="Nombre" class="form-control" maxlength="100" placeholder="Mario" required aria-required="true" />
-                    <span asp-validation-for="Nombre" class="text-danger"></span>
                 </div>
 
                 <div class="col-md-6 mb-3">
                     <label asp-for="Apellido" class="form-label">@Html.DisplayNameFor(m => m.Apellido)</label>
                     <span class="text-danger" title="Campo obligatorio">*</span>
                     <input asp-for="Apellido" class="form-control" maxlength="100" placeholder="Ramirez Moreta" required aria-required="true" />
-                    <span asp-validation-for="Apellido" class="text-danger"></span>
                 </div>
 
                 <div class="col-md-6 mb-3">
                     <label asp-for="Correo" class="form-label">@Html.DisplayNameFor(m => m.Correo)</label>
                     <span class="text-danger" title="Campo obligatorio">*</span>
                     <input asp-for="Correo" class="form-control" maxlength="150" placeholder="Mario@opret.gob.do" id="Correo" required aria-required="true" />
-                    <span asp-validation-for="Correo" class="text-danger"></span>
                     <small id="correo-feedback" class="form-text text-muted mt-1"></small>
                 </div>
 
@@ -171,7 +169,6 @@
                     <select asp-for="DepartamentoId" asp-items="ViewBag.Departamentos" class="form-control selectpicker" data-live-search="true" data-size="5" id="DepartamentoId" required aria-required="true">
                         <option value="">Seleccione un departamento</option>
                     </select>
-                    <span asp-validation-for="DepartamentoId" class="text-danger"></span>
                 </div>
 
                 <div class="col-md-6 mb-3" id="rolGroup">
@@ -180,7 +177,6 @@
                     <select asp-for="RolId" asp-items="ViewBag.Roles" class="form-control selectpicker" data-live-search="true" data-size="5" id="RolId" required aria-required="true">
                         <option value="">Seleccione un rol</option>
                     </select>
-                    <span asp-validation-for="RolId" class="text-danger"></span>
                 </div>
 
                 <div class="col-md-6 mb-3" id="divisionGroup">
@@ -189,7 +185,6 @@
                     <select asp-for="DivisionId" asp-items="ViewBag.Divisiones" class="form-control selectpicker" data-live-search="true" data-size="5" id="DivisionId">
                         <option value="">Seleccione una división</option>
                     </select>
-                    <span asp-validation-for="DivisionId" class="text-danger"></span>
                 </div>
 
 
@@ -200,7 +195,6 @@
                         <option value="true" selected="@Model.Activo">Activo</option>
                         <option value="false" selected="@(!Model.Activo)">Inactivo</option>
                     </select>
-                    <span asp-validation-for="Activo" class="text-danger"></span>
                 </div>
 
                 <div class="col-md-6 mb-3">
@@ -332,9 +326,7 @@
                     const campo = document.querySelector(`[name="${nombre}"]`);
                     if (campo && !campo.value.trim()) {
                         validacionFallida = true;
-                        $(campo).addClass('is-invalid');
-                    } else {
-                        $(campo).removeClass('is-invalid');
+
                     }
                 });
 
@@ -343,17 +335,12 @@
                     const select = $('#' + id);
                     if (!select.val()) {
                         validacionFallida = true;
-                        select.next('.dropdown-toggle').addClass('is-invalid');
-                    } else {
-                        select.next('.dropdown-toggle').removeClass('is-invalid');
+                      
                     }
                 });
 
                 if (!esEncargado && (!divisionSelect.val() || divisionSelect.val() === '')) {
                     validacionFallida = true;
-                    divisionSelect.next('.dropdown-toggle').addClass('is-invalid');
-                } else {
-                    divisionSelect.next('.dropdown-toggle').removeClass('is-invalid');
                 }
 
                 if (validacionFallida) {
