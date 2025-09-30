@@ -99,7 +99,6 @@
             $('form').attr('novalidate', 'novalidate');
             $('.selectpicker').selectpicker();
 
-
             const warningMessage = '@Html.Raw(TempData["Warning"]?.ToString())';
             const ValidacionMessage = '@Html.Raw(TempData["Validacion"]?.ToString())';
 
@@ -125,9 +124,9 @@
             const nombreInput = $('[name="Nombre"]');
             const inicialesInput = $('[name="Iniciales"]');
             const descripcionInput = $('[name="Descripcion"]');
-     
 
-           nombreInput.on("input", function () {
+
+            nombreInput.on("input", function () {
             const palabras = $(this).val().trim().split(/\s+/);
             const generadas = palabras.map(p => p.charAt(0).toUpperCase()).join("");
 
@@ -143,7 +142,6 @@
             $(this).val($(this).val().toUpperCase());
         });
 
-           
 
             if (descripcionInput.length) {
                 const contador = $('#contadorDescripcion');
@@ -182,16 +180,17 @@
                 else if (actual >= umbral) contador.addClass("text-warning");
             }
 
+
             $('#editForm').on('submit', function (e) {
                 e.preventDefault();
 
-                const camposObligatorios = ['Nombre', 'Iniciales'];
-                let validacionFallida = false;
+                const nombreActual = nombreInput.val()?.trim();
+                const inicialesActuales = inicialesInput.val()?.trim();
 
 
-                if (validacionFallida) {
+                if (!nombreActual || !inicialesActuales) {
                     Swal.fire({
-                          title: '<span>Campos requeridos (<span style="color:#dc3545">*</span>)</span>',
+                        title: '<span>Campos requeridos (<span style="color:#dc3545">*</span>)</span>',
                         text: "Por favor complete todos los campos obligatorios.",
                         icon: "warning",
                         confirmButtonText: "Entendido",
@@ -202,7 +201,6 @@
 
                 this.submit();
             });
-
         });
     </script>
 }
