@@ -25,7 +25,7 @@ namespace OfiGest.Context.Controllers
             return Json(new { cantidad });
         }
 
-        // 📋 Lista de notificaciones no leídas
+        //  Lista de notificaciones no leídas
         [HttpGet]
         public async Task<JsonResult> ObtenerLista()
         {
@@ -50,7 +50,7 @@ namespace OfiGest.Context.Controllers
         [HttpPost]
         public async Task<JsonResult> MarcarComoLeida([FromBody] int id)
         {
-            Console.WriteLine($"🔍 [MarcarComoLeida] ID recibido: {id}");
+            Console.WriteLine($" [MarcarComoLeida] ID recibido: {id}");
 
             if (id <= 0) return Json(new { success = false, message = "ID inválido" });
 
@@ -62,7 +62,7 @@ namespace OfiGest.Context.Controllers
         }
 
 
-        // 🔐 Helper institucional para obtener ID del usuario autenticado
+        //  Helper institucional para obtener ID del usuario autenticado
         private int? ObtenerUsuarioId()
         {
             var claimId = User.FindFirst("Id")?.Value;

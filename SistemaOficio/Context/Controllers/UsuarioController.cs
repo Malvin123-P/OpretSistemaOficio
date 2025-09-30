@@ -198,7 +198,8 @@ namespace OfiGest.Controllers
                 }
             }
 
-            var dominiosPermitidos = _config.GetSection("SeguridadCorreo:DominiosPermitidos").Get<List<string>>();
+            //var dominiosPermitidos = _config.GetSection("SeguridadCorreo:DominiosPermitidos").Get<List<string>>();
+            var dominiosPermitidos = Environment.GetEnvironmentVariable("DominiosPermitidos").Split(',');
             bool correoValido = dominiosPermitidos.Any(d => model.Correo.EndsWith(d, StringComparison.OrdinalIgnoreCase));
 
             if (!correoValido)

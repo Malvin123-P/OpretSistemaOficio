@@ -6,7 +6,6 @@ using OfiGest.Context;
 using OfiGest.Helpers;
 using OfiGest.Managers;
 using OfiGest.Manegers;
-using OfiGest.Utilities;
 using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -30,14 +29,20 @@ builder.Services.AddAntiforgery(options =>
 builder.Services.AddControllersWithViews()
     .AddDataAnnotationsLocalization(); // Validaciones en español
 
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
+if (!builder.Environment.IsDevelopment())
 {
-    options.UseSqlServer(builder.Configuration.GetConnectionString("CadenaSql"));
-});
-
-// Configuración de seguridad institucional
-builder.Services.Configure<SeguridadCorreoOptions>(
-    builder.Configuration.GetSection("SeguridadCorreo"));
+    builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    {
+        options.UseSqlServer($@"Server={Environment.GetEnvironmentVariable("server")};Database={Environment.GetEnvironmentVariable("database")};Trusted_Connection=True;MultipleActiveResultSets=true;TrustServerCertificate=True;");
+    });
+}
+else
+{
+    builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    {
+        options.UseSqlServer($@"Server={Environment.GetEnvironmentVariable("server")};Database={Environment.GetEnvironmentVariable("database")};Trusted_Connection=True;MultipleActiveResultSets=true;TrustServerCertificate=True;");
+    });
+}
 
 // Registro de servicios del sistema
 builder.Services.AddScoped<DepartamentosManenger>();

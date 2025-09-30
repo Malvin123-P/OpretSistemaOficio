@@ -14,15 +14,12 @@ namespace OfiGest.Managers
     {
         private readonly ApplicationDbContext _context;
         private readonly CorreoManager _correoManager;
-        private readonly IConfiguration _config;
         private readonly IWebHostEnvironment _environment;
 
-        public UsuarioManager(ApplicationDbContext context, CorreoManager correoManager,
-                            IConfiguration config, IWebHostEnvironment environment)
+        public UsuarioManager(ApplicationDbContext context, CorreoManager correoManager,IWebHostEnvironment environment)
         {
             _context = context;
             _correoManager = correoManager;
-            _config = config;
             _environment = environment;
         }
 

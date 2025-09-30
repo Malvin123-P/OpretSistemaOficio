@@ -10,8 +10,6 @@ public class NotificacionManager
         _context = context;
     }
 
-
-    //  Obtener lista de notificaciones pendientes
     public async Task<List<Notificaciones>> ObtenerNotificacionesAsync(int usuarioId, int top = 5)
     {
         try

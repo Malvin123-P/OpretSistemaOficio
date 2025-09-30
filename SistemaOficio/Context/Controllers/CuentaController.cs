@@ -13,13 +13,13 @@ namespace OfiGest.Context.Controllers
     {
         private readonly CorreoManager _correoManager;
         private readonly ApplicationDbContext _context;
-        private readonly IConfiguration _config;
+      
 
-        public CuentaController(CorreoManager correoManager, ApplicationDbContext context, IConfiguration config)
+        public CuentaController(CorreoManager correoManager, ApplicationDbContext context)
         {
             _correoManager = correoManager;
             _context = context;
-            _config = config;
+         
         }
 
         [HttpGet]
@@ -36,7 +36,7 @@ namespace OfiGest.Context.Controllers
         {
             if (!ModelState.IsValid) return View(model);
 
-            var dominiosPermitidos = _config.GetSection("SeguridadCorreo:DominiosPermitidos").Get<string[]>() ?? Array.Empty<string>();
+            var dominiosPermitidos = Environment.GetEnvironmentVariable("SeguridadCorreo_DominiosPermitidos").Split(  );
 
             var correoNormalizado = model.Correo.Trim().ToLower();
         

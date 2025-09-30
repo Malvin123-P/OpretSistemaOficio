@@ -8,12 +8,12 @@ namespace OfiGest.Manegers
     public class CorreoManager
     {
         private readonly ApplicationDbContext _context;
-        private readonly IConfiguration _config;
+   
 
-        public CorreoManager(ApplicationDbContext context, IConfiguration config)
+        public CorreoManager(ApplicationDbContext context)
         {
             _context = context;
-            _config = config;
+           
         }
 
         private bool EnviarCorreo(string destinatario, string asunto, string cuerpoHtml)
@@ -24,11 +24,12 @@ namespace OfiGest.Manegers
 
             try
             {
-                var remitente = _config["Correo:Remitente"];
-                var smtpUsuario = _config["Correo:Usuario"];
-                var clave = _config["Correo:Clave"];
-                var servidor = _config["Correo:Servidor"];
-                var puerto = int.Parse(_config["Correo:Puerto"]);
+
+                var remitente = Environment.GetEnvironmentVariable("Correo_Remitente");
+                var smtpUsuario = Environment.GetEnvironmentVariable("Correo_Usuario");
+                var clave = Environment.GetEnvironmentVariable("Correo_clave");
+                var servidor = Environment.GetEnvironmentVariable("Correo_servidor");
+                var puerto = int.Parse(Environment.GetEnvironmentVariable("Correo_puerto"));
 
                 var mensaje = new MailMessage
                 {
@@ -87,12 +88,13 @@ namespace OfiGest.Manegers
 
             return plantilla;
         }
+
         public bool EnviarRestablecimientoClave(string correo)
         {
             var usuario = _context.Usuarios.FirstOrDefault(u => u.Correo == correo);
             if (usuario == null) return false;
 
-            var baseUrl = _config["Correo:BaseUrl"];
+            var baseUrl = Environment.GetEnvironmentVariable("Correo_BaseUrl");
             if (string.IsNullOrWhiteSpace(baseUrl))
                 return false;
 
@@ -104,7 +106,7 @@ namespace OfiGest.Manegers
                 return false;
 
             var token = TokenGenerate.GenerarToken();
-            var minutosExpiracion = int.Parse(_config["CorreoRestablecer:ExpiracionMinutos"]);
+            var minutosExpiracion = int.Parse(Environment.GetEnvironmentVariable("CorreoRestablecer_ExpiracionMinutos"));
 
             usuario.Token = token;
             usuario.TokenExpira = DateTime.UtcNow.AddMinutes(minutosExpiracion);
@@ -135,13 +137,12 @@ namespace OfiGest.Manegers
             return EnviarCorreo(correo, "Restablecimiento de contraseña - OfiGest", cuerpoHtml);
         }
 
-
         public bool EnviarActivacionCuenta(string correo)
         {
             var usuario = _context.Usuarios.FirstOrDefault(u => u.Correo == correo);
             if (usuario == null) return false;
 
-            var baseUrl = _config["Correo:BaseUrl"];
+            var baseUrl = Environment.GetEnvironmentVariable("Correo_BaseUrl");
             if (string.IsNullOrWhiteSpace(baseUrl))
                 return false;
 
@@ -153,7 +154,7 @@ namespace OfiGest.Manegers
                 return false;
 
             var token = TokenGenerate.GenerarToken();
-            var minutosExpiracion = int.Parse(_config["CorreoRestablecer:ExpiracionMinutos"]);
+            var minutosExpiracion = int.Parse(Environment.GetEnvironmentVariable("CorreoActivacion_ExpiracionMinutos"));
 
             usuario.Token = token;
             usuario.TokenExpira = DateTime.UtcNow.AddMinutes(minutosExpiracion);
@@ -179,7 +180,6 @@ namespace OfiGest.Manegers
                 ["AñoActual"] = DateTime.Now.Year.ToString()
 
             });
-
 
             return EnviarCorreo(correo, "Activación de cuenta - OfiGest", cuerpoHtml);
         }

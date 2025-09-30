@@ -144,8 +144,6 @@ namespace OfiGest.Manegers
         }
 
 
-    
-
         public async Task<DivisionesModel?> ObtenerPorInicialesYDepartamentoAsync(string iniciales, int departamentoId)
         {
             var d = await _context.Divisiones
