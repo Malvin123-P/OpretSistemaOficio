@@ -50,7 +50,6 @@ namespace OfiGest.Context.Controllers
                 return View(model);
             }
 
-           
             var conflictoCompuesto = await _manenger.ExisteTipoOficioCompuestoAsync(model.Nombre, model.Iniciales);
 
             if (conflictoCompuesto)

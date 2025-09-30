@@ -127,7 +127,7 @@
             const descripcionInput = $('[name="Descripcion"]');
      
 
-                    nombreInput.on("input", function () {
+           nombreInput.on("input", function () {
             const palabras = $(this).val().trim().split(/\s+/);
             const generadas = palabras.map(p => p.charAt(0).toUpperCase()).join("");
 
@@ -198,21 +198,6 @@
                         confirmButtonColor: "#3D6FAD"
                     });
                     return false;
-                }
-
-                const nombreActual = nombreInput.val();
-                const inicialesActuales = inicialesInput.val();
-                const descripcionActual = descripcionInput.val();
-
-                if (!nombreActual || !inicialesActuales ) {
-                    Swal.fire({
-                        icon: "warning",
-                        title: "¡Atención!",
-                        text: "No se detectaron cambios en el formulario. Realice alguna modificación antes de actualizar.",
-                        confirmButtonText: "Entendido",
-                        confirmButtonColor: "#3D6FAD"
-                    });
-                    return;
                 }
 
                 this.submit();
