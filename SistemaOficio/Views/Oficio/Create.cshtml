@@ -135,6 +135,23 @@
     .col-md-12 {
         min-width: 0;
     }
+
+    /* Corrección ortográfica - Estilos mejorados */
+    .note-editable[spellcheck="true"] {
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+        font-kerning: normal;
+    }
+
+    .spellcheck-info {
+        background: #e7f3ff;
+        border-left: 4px solid #3D6FAD;
+    }
+
+    .spellcheck-warning {
+        background: #fff3cd;
+        border-left: 4px solid #ffc107;
+    }
 </style>
 
 <form asp-action="Create" method="post" autocomplete="off" id="formCreate">
@@ -198,6 +215,7 @@
                             <div id="summernote"></div>
                         </div>
                     </div>
+
                     <span asp-validation-for="Contenido" class="text-danger d-none"></span>
                 </div>
             </div>
@@ -247,6 +265,60 @@
         let componentesInicializados = false;
         let enviandoFormulario = false;
 
+        function verificarSoporteSpellcheck() {
+            const testElement = document.createElement('div');
+            testElement.setAttribute('spellcheck', 'true');
+            testElement.setAttribute('contenteditable', 'true');
+
+            const soporteCompleto = 'spellcheck' in testElement &&
+                                   'contentEditable' in document.documentElement;
+
+            if (!soporteCompleto) {
+                console.warn('Spellcheck nativo limitado en este navegador');
+
+                // Mostrar mensaje al usuario
+                $('#spellcheckInfo')
+                    .removeClass('spellcheck-info')
+                    .addClass('spellcheck-warning')
+                    .html('<i class="fas fa-exclamation-triangle"></i>' +
+                         '<strong>Corrección limitada:</strong> ' +
+                         'Para mejor corrección ortográfica, use Chrome, Edge o Firefox actualizado. ' +
+                         '<span class="text-muted">(Puede usar F7 para verificar ortografía)</span>');
+            }
+
+            return soporteCompleto;
+        }
+
+        function configurarEventosTeclado() {
+            const editable = $('.note-editable');
+
+            // Mejorar la experiencia de escritura
+            editable.on('keydown', function(e) {
+                // Permitir que el navegador maneje la corrección con F7
+                if (e.key === 'F7') {
+                    // El navegador manejará el spellcheck con F7 automáticamente
+                    console.log('Verificación ortográfica activada (F7)');
+                }
+
+                // Reforzar spellcheck después de escribir
+                if (e.key.length === 1 || e.key === 'Backspace' || e.key === 'Delete') {
+                    setTimeout(() => {
+                        $(this).attr('spellcheck', 'true');
+                    }, 100);
+                }
+            });
+
+            // Reforzar spellcheck después de cambios
+            editable.on('input', function() {
+                $(this).attr('spellcheck', 'true');
+            });
+
+            // Manejar clic derecho para asegurar spellcheck
+            editable.on('contextmenu', function() {
+                $(this).attr('spellcheck', 'true');
+            });
+        }
+
         function inicializarComponentes() {
             if (componentesInicializados) {
                 return;
@@ -255,23 +327,45 @@
             // 1. Inicializar bootstrap-select
             $('.selectpicker').selectpicker();
 
-            // 2. Inicializar Summernote con herramientas compatibles
+            // 2. Configuración MEJORADA de Summernote con spellcheck
             $('#summernote').summernote({
                 lang: 'es-ES',
                 height: 400,
                 maxHeight: 400,
+
+                // HABILITAR CORRECCIÓN ORTOGRÁFICA
+                spellCheck: true,
+
+                // Toolbar simplificado y compatible
                 toolbar: [
                     ['style', ['bold', 'italic', 'underline', 'clear']],
-                    ['para', ['ul', 'ol']]
+                    ['para', ['ul', 'ol', 'paragraph']],
+                    ['misc', ['undo', 'redo']]
                 ],
+
                 fontNames: ['Arial', 'Times New Roman', 'Verdana', 'Georgia'],
                 fontSizeUnits: ['px', 'pt'],
                 placeholder: 'Escriba el contenido del oficio aquí...',
                 disableDragAndDrop: true,
                 shortcuts: false,
+
+                // Configuración MEJORADA para spellcheck
                 callbacks: {
                     onInit: function() {
-                        console.log('Editor inicializado - Formatos compatibles con PDF activados');
+                        console.log('Editor inicializado - Spellcheck activado');
+
+                        // FORZAR spellcheck en el área editable
+                        const editableElement = $('.note-editable');
+                        editableElement.attr('spellcheck', 'true');
+                        editableElement.attr('contenteditable', 'true');
+
+                        // Aplicar estilos adicionales para mejor spellcheck
+                        editableElement.css({
+                            'text-rendering': 'optimizeLegibility',
+                            'font-size': '14px',
+                            'line-height': '1.5',
+                            'font-family': 'Arial, sans-serif'
+                        });
 
                         // Marcar toolbar como compatible
                         $('.note-toolbar').addClass('toolbar-compatible');
@@ -280,20 +374,38 @@
                         if (initialContent) {
                             $('#summernote').summernote('code', initialContent);
                         }
+
+                        // Configurar eventos de teclado para mejor experiencia
+                        configurarEventosTeclado();
+
+                        // Verificar soporte de spellcheck
+                        verificarSoporteSpellcheck();
                     },
                     onChange: function(contents) {
-                        // Limpiar y guardar contenido
                         const contenidoLimpio = limpiarHtmlCompatible(contents);
                         $('input[name="Contenido"]').val(contenidoLimpio);
-
-                        // Mostrar preview en consola
-                        console.log('Contenido actualizado:', contenidoLimpio.substring(0, 100) + '...');
                     },
                     onPaste: function(e) {
-                        // Limpiar formato al pegar
+                        // Limpiar formato al pegar pero mantener texto
                         var bufferText = ((e.originalEvent || e).clipboardData || window.clipboardData).getData('Text');
                         e.preventDefault();
+
+                        // Insertar texto manteniendo el spellcheck
                         document.execCommand('insertText', false, bufferText);
+
+                        // Reforzar spellcheck después de pegar
+                        setTimeout(() => {
+                            const editable = $('.note-editable');
+                            editable.attr('spellcheck', 'true');
+                        }, 100);
+                    },
+                    onBlur: function() {
+                        // Asegurar que el spellcheck permanezca activo
+                        $('.note-editable').attr('spellcheck', 'true');
+                    },
+                    onFocus: function() {
+                        // Reactivar spellcheck al enfocar
+                        $('.note-editable').attr('spellcheck', 'true');
                     }
                 }
             });
@@ -361,11 +473,11 @@
                     return;
                 }
 
-                // Deshabilitar botón para evitar múltiples envíos (PERO SIN SPINNER)
+                // Deshabilitar botón para evitar múltiples envíos
                 enviandoFormulario = true;
                 $('#btnSubmit').prop('disabled', true).html('GENERANDO...');
 
-                // Enviar formulario directamente SIN mostrar loading
+                // Enviar formulario directamente
                 setTimeout(() => {
                     // Remover el event listener temporalmente para evitar loop
                     $('#formCreate').off('submit');
@@ -491,12 +603,14 @@
                 }
             });
 
-            // Configurar eventos
+            // Configurar eventos del editor
             $(document).on('click', '.note-btn', function() {
                 setTimeout(function() {
                     const editable = $('.note-editable');
                     if (editable.length) {
                         editable.css('overflow-y', 'auto');
+                        // Reforzar spellcheck después de acciones de toolbar
+                        editable.attr('spellcheck', 'true');
                     }
                 }, 50);
             });
@@ -523,7 +637,7 @@
                 }
             });
 
-            // Ejemplo de contenido compatible
+            // Botón de ejemplo (opcional - puedes remover si no lo necesitas)
             $('#btn-ejemplo').on('click', function() {
                 const contenidoEjemplo = `
         <p>Por medio del presente oficio, <b>solicitamos amablemente</b> la siguiente información:</p>

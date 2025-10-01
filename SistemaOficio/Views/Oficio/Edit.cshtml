@@ -101,18 +101,17 @@
         height: 400px;
     }
 
-         .summernote-admin .note-editable {
+        .summernote-admin .note-editable {
             min-height: 400px;
             max-height: 400px;
         }
 
 
-    .summernote-expandido
-     {
-         display: flex;
-         flex-direction: column;
-         height: 460px;
-     }
+    .summernote-expandido {
+        display: flex;
+        flex-direction: column;
+        height: 460px;
+    }
 
         .summernote-expandido .note-editable {
             min-height: 460px;
@@ -156,8 +155,26 @@
     .col-md-12 {
         min-width: 0;
     }
+
+    /* Corrección ortográfica - Estilos mejorados */
+    .note-editable[spellcheck="true"] {
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+        font-kerning: normal;
+    }
+
+    .spellcheck-info {
+        background: #e7f3ff;
+        border-left: 4px solid #3D6FAD;
+    }
+
+    .spellcheck-warning {
+        background: #fff3cd;
+        border-left: 4px solid #ffc107;
+    }
 </style>
-<form asp-action="Edit" method="post" autocomplete="off">
+
+<form asp-action="Edit" method="post" autocomplete="off" id="formEdit">
     @Html.AntiForgeryToken()
     <input type="hidden" asp-for="Id" />
     <input type="hidden" asp-for="MotivoModificacion" />
@@ -240,7 +257,6 @@
                             </div>
                         }
                     </div>
-
                     <span asp-validation-for="Contenido" class="text-danger d-none"></span>
                 </div>
             </div>
@@ -263,13 +279,14 @@
 
             <!-- Botón -->
             <div class="mt-auto">
-                <button type="submit" class="btn btn-azul d-flex justify-content-center align-items-center gap-2 w-100">
+                <button type="submit" class="btn btn-azul d-flex justify-content-center align-items-center gap-2 w-100" id="btnSubmit">
                     ACTUALIZAR OFICIO
                 </button>
             </div>
         </div>
     </div>
 </form>
+
 @section Scripts {
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
@@ -294,6 +311,61 @@
         // Variables de control
         let componentesInicializados = false;
         let contenidoOriginal = '';
+        let enviandoFormulario = false;
+
+        function verificarSoporteSpellcheck() {
+            const testElement = document.createElement('div');
+            testElement.setAttribute('spellcheck', 'true');
+            testElement.setAttribute('contenteditable', 'true');
+
+            const soporteCompleto = 'spellcheck' in testElement &&
+                                   'contentEditable' in document.documentElement;
+
+            if (!soporteCompleto) {
+                console.warn('Spellcheck nativo limitado en este navegador');
+
+                // Mostrar mensaje al usuario
+                $('#spellcheckInfo')
+                    .removeClass('spellcheck-info')
+                    .addClass('spellcheck-warning')
+                    .html('<i class="fas fa-exclamation-triangle"></i>' +
+                         '<strong>Corrección limitada:</strong> ' +
+                         'Para mejor corrección ortográfica, use Chrome, Edge o Firefox actualizado. ' +
+                         '<span class="text-muted">(Puede usar F7 para verificar ortografía)</span>');
+            }
+
+            return soporteCompleto;
+        }
+
+        function configurarEventosTeclado() {
+            const editable = $('.note-editable');
+
+            // Mejorar la experiencia de escritura
+            editable.on('keydown', function(e) {
+                // Permitir que el navegador maneje la corrección con F7
+                if (e.key === 'F7') {
+                    // El navegador manejará el spellcheck con F7 automáticamente
+                    console.log('Verificación ortográfica activada (F7)');
+                }
+
+                // Reforzar spellcheck después de escribir
+                if (e.key.length === 1 || e.key === 'Backspace' || e.key === 'Delete') {
+                    setTimeout(() => {
+                        $(this).attr('spellcheck', 'true');
+                    }, 100);
+                }
+            });
+
+            // Reforzar spellcheck después de cambios
+            editable.on('input', function() {
+                $(this).attr('spellcheck', 'true');
+            });
+
+            // Manejar clic derecho para asegurar spellcheck
+            editable.on('contextmenu', function() {
+                $(this).attr('spellcheck', 'true');
+            });
+        }
 
         function inicializarComponentes() {
             if (componentesInicializados) {
@@ -309,23 +381,45 @@
             // 3. Determinar altura según el rol
             const altura = '@rolUsuario' === 'Administrador' ? 400 : 460;
 
-            // 4. Inicializar Summernote con herramientas compatibles
+            // 4. Configuración MEJORADA de Summernote con spellcheck
             $('#summernote').summernote({
                 lang: 'es-ES',
                 height: altura,
                 maxHeight: altura,
+
+                // HABILITAR CORRECCIÓN ORTOGRÁFICA
+                spellCheck: true,
+
+                // Toolbar simplificado y compatible
                 toolbar: [
                     ['style', ['bold', 'italic', 'underline', 'clear']],
-                    ['para', ['ul', 'ol']]
+                    ['para', ['ul', 'ol', 'paragraph']],
+                    ['misc', ['undo', 'redo']]
                 ],
+
                 fontNames: ['Arial', 'Times New Roman', 'Verdana', 'Georgia'],
                 fontSizeUnits: ['px', 'pt'],
                 placeholder: 'Escriba el contenido del oficio aquí...',
                 disableDragAndDrop: true,
                 shortcuts: false,
+
+                // Configuración MEJORADA para spellcheck
                 callbacks: {
                     onInit: function() {
-                        console.log('Editor inicializado - Formatos compatibles con PDF activados');
+                        console.log('Editor inicializado - Spellcheck activado');
+
+                        // FORZAR spellcheck en el área editable
+                        const editableElement = $('.note-editable');
+                        editableElement.attr('spellcheck', 'true');
+                        editableElement.attr('contenteditable', 'true');
+
+                        // Aplicar estilos adicionales para mejor spellcheck
+                        editableElement.css({
+                            'text-rendering': 'optimizeLegibility',
+                            'font-size': '14px',
+                            'line-height': '1.5',
+                            'font-family': 'Arial, sans-serif'
+                        });
 
                         // Marcar toolbar como compatible
                         $('.note-toolbar').addClass('toolbar-compatible');
@@ -334,20 +428,39 @@
                         if (contenidoOriginal) {
                             $('#summernote').summernote('code', contenidoOriginal);
                         }
+
+                        // Configurar eventos de teclado para mejor experiencia
+                        configurarEventosTeclado();
+
+                        // Verificar soporte de spellcheck
+                        verificarSoporteSpellcheck();
                     },
                     onChange: function(contents) {
                         // Limpiar y guardar contenido
                         const contenidoLimpio = limpiarHtmlCompatible(contents);
                         $('input[name="Contenido"]').val(contenidoLimpio);
-
-                        // Mostrar preview en consola
-                        console.log('Contenido actualizado:', contenidoLimpio.substring(0, 100) + '...');
                     },
                     onPaste: function(e) {
-                        // Limpiar formato al pegar
+                        // Limpiar formato al pegar pero mantener texto
                         var bufferText = ((e.originalEvent || e).clipboardData || window.clipboardData).getData('Text');
                         e.preventDefault();
+
+                        // Insertar texto manteniendo el spellcheck
                         document.execCommand('insertText', false, bufferText);
+
+                        // Reforzar spellcheck después de pegar
+                        setTimeout(() => {
+                            const editable = $('.note-editable');
+                            editable.attr('spellcheck', 'true');
+                        }, 100);
+                    },
+                    onBlur: function() {
+                        // Asegurar que el spellcheck permanezca activo
+                        $('.note-editable').attr('spellcheck', 'true');
+                    },
+                    onFocus: function() {
+                        // Reactivar spellcheck al enfocar
+                        $('.note-editable').attr('spellcheck', 'true');
                     }
                 }
             });
@@ -366,7 +479,11 @@
                 return contenidoLimpio === '<p><br></p>' || contenidoLimpio.trim() === '' ? '' : contenidoLimpio.trim();
             };
 
-            $('form').on('submit', async function (e) {
+            $('#formEdit').on('submit', async function (e) {
+                if (enviandoFormulario) {
+                    return;
+                }
+
                 e.preventDefault();
 
                 // Actualizar campo oculto con contenido actual
@@ -405,6 +522,19 @@
                     return;
                 }
 
+                // Validar URL de anexos si se proporciona
+                const anexosUrl = $('[name="Anexos"]').val().trim();
+                if (anexosUrl && !esUrlValida(anexosUrl)) {
+                    Swal.fire({
+                        title: 'URL inválida',
+                        text: 'Por favor, ingrese una URL válida para los anexos.',
+                        icon: 'warning',
+                        confirmButtonText: 'Entendido',
+                        confirmButtonColor: '#3D6FAD'
+                    });
+                    return;
+                }
+
                 // Verificar si hay cambios
                 if (!hayCambiosSignificativos(contenidoActual)) {
                     Swal.fire({
@@ -425,8 +555,18 @@
 
                 document.querySelector('[name="MotivoModificacion"]').value = motivo;
 
-                // Enviar formulario directamente sin mostrar loading
-                e.target.submit();
+                // Deshabilitar botón para evitar múltiples envíos
+                enviandoFormulario = true;
+                $('#btnSubmit').prop('disabled', true).html('ACTUALIZANDO...');
+
+                // Enviar formulario después de un breve delay
+                setTimeout(() => {
+                    // Remover el event listener temporalmente para evitar loop
+                    $('#formEdit').off('submit');
+
+                    // Enviar el formulario
+                    document.getElementById('formEdit').submit();
+                }, 300);
             });
         }
 
@@ -630,12 +770,29 @@
             inicializarComponentes();
             protegerComponentes();
 
+            // Manejar errores de conexión
+            $(document).ajaxError(function(event, jqxhr, settings, thrownError) {
+                if (jqxhr.status === 0) {
+                    Swal.fire({
+                        title: 'Error de conexión',
+                        text: 'No se pudo conectar al servidor. Verifique su conexión a internet.',
+                        icon: 'error',
+                        confirmButtonText: 'Entendido',
+                        confirmButtonColor: '#3D6FAD'
+                    });
+                    enviandoFormulario = false;
+                    $('#btnSubmit').prop('disabled', false).html('ACTUALIZAR OFICIO');
+                }
+            });
+
             // Mantener funcionalidad del editor
             $(document).on('click', '.note-btn', function() {
                 setTimeout(function() {
                     const editable = $('.note-editable');
                     if (editable.length) {
                         editable.css('overflow-y', 'auto');
+                        // Reforzar spellcheck después de acciones de toolbar
+                        editable.attr('spellcheck', 'true');
                     }
                 }, 50);
             });
@@ -649,6 +806,13 @@
                 } else {
                     input.removeClass('is-invalid');
                     input.next('.invalid-feedback').remove();
+                }
+            });
+
+            // Restaurar estado del botón si hay una recarga de página
+            $(window).on('beforeunload', function() {
+                if (enviandoFormulario) {
+                    $('#btnSubmit').prop('disabled', false).html('ACTUALIZAR OFICIO');
                 }
             });
         });

@@ -26,7 +26,6 @@ namespace OfiGest.Context.Controllers
         {
             try
             {
-                // Obtener el oficio de la base de datos
                 var oficio = await _context.Oficios
                     .Include(o => o.Usuario)
                     .Include(o => o.DepartamentoRemitente)
@@ -39,14 +38,15 @@ namespace OfiGest.Context.Controllers
                     return RedirectToAction(nameof(Index));
                 }
 
-                // Verificar si el oficio está activo
                 if (!oficio.Estado)
                 {
                     TempData["Error"] = "No se puede descargar un oficio inactivo";
                     return RedirectToAction(nameof(Index));
                 }
 
-                // OBTENER EL ENCARGADO DEPARTAMENTAL (igual que en CrearOficioAsync)
+                // DETERMINAR SI ES CERTIFICACIÓN U OFICIO
+                var esCertificacion = EsCertificacion(oficio.TipoOficio?.Nombre);
+
                 var encargadoDepartamental = await _context.Usuarios
                     .Where(u => u.DepartamentoId == oficio.DepartamentoId &&
                                u.EsEncargadoDepartamental &&
@@ -54,34 +54,53 @@ namespace OfiGest.Context.Controllers
                     .Select(u => $"{u.Nombre} {u.Apellido}".Trim())
                     .FirstOrDefaultAsync();
 
-                // Mapear a modelo PDF
-                var pdfModel = new OficioPdfModel
+                if (esCertificacion)
                 {
-                    Codigo = oficio.Codigo ?? "",
-                    FechaCreacion = oficio.FechaCreacion,
-                    DepartamentoRemitente = oficio.DepartamentoRemitente?.Nombre ?? "",
-                    DirigidoDepartamento = oficio.DirigidoDepartamento ?? "",
-                    TipoOficio = oficio.TipoOficio?.Nombre ?? "",
-                    Via = oficio.Via ?? "",
-                    Contenido = oficio.Contenido ?? "",
-                    Anexos = oficio.Anexos ?? "",
-                    EncargadoDepartamental = encargadoDepartamental ?? "Encargado Departamental"
-                 
-                };
+                    // USAR MANAGER DE CERTIFICACIONES
+                    var certificacionModel = new CertificacionPdfModel
+                    {
+                        Codigo = oficio.Codigo ?? "",
+                        FechaCreacion = oficio.FechaCreacion,
+                        DepartamentoRemitente = oficio.DepartamentoRemitente?.Nombre ?? "",
+                        Contenido = oficio.Contenido ?? "",
+                        Anexos = oficio.Anexos ?? "",
+                        EncargadoDepartamental = encargadoDepartamental ?? "Encargado Departamental",
+                        CargoFirmante = "Jefe de Departamento" // Puedes personalizar esto
+                    };
 
-                // Generar PDF
-                var pdfManager = new PdfOficioManager();
-                var pdfBytes = pdfManager.GenerarPdf(pdfModel);
-                var nombreArchivo = pdfManager.ObtenerNombreArchivo(pdfModel);
+                    var certificacionManager = new PdfCertificacionManager();
+                    var pdfBytes = certificacionManager.GenerarPdf(certificacionModel);
+                    var nombreArchivo = certificacionManager.ObtenerNombreArchivo(certificacionModel);
 
-                // Devolver archivo PDF
-                return File(pdfBytes, "application/pdf", nombreArchivo);
+                    return File(pdfBytes, "application/pdf", nombreArchivo);
+                }
+                else
+                {
+                    // USAR MANAGER DE OFICIOS
+                    var pdfModel = new OficioPdfModel
+                    {
+                        Codigo = oficio.Codigo ?? "",
+                        FechaCreacion = oficio.FechaCreacion,
+                        DepartamentoRemitente = oficio.DepartamentoRemitente?.Nombre ?? "",
+                        DirigidoDepartamento = oficio.DirigidoDepartamento ?? "",
+                        TipoOficio = oficio.TipoOficio?.Nombre ?? "",
+                        Via = oficio.Via ?? "",
+                        Contenido = oficio.Contenido ?? "",
+                        Anexos = oficio.Anexos ?? "",
+                        EncargadoDepartamental = encargadoDepartamental ?? "Encargado Departamental"
+                    };
+
+                    var pdfManager = new PdfOficioManager();
+                    var pdfBytes = pdfManager.GenerarPdf(pdfModel);
+                    var nombreArchivo = pdfManager.ObtenerNombreArchivo(pdfModel);
+
+                    return File(pdfBytes, "application/pdf", nombreArchivo);
+                }
             }
             catch (Exception ex)
             {
-                // Log del error
                 Console.WriteLine($"Error al generar PDF: {ex.Message}");
-                TempData["Error"] = "Error al generar el PDF del oficio";
+                TempData["Error"] = "Error al generar el PDF del documento";
                 return RedirectToAction(nameof(Index));
             }
         }
@@ -179,11 +198,13 @@ namespace OfiGest.Context.Controllers
 
                 if (oficio == null)
                 {
-                    TempData["Error"] = "Oficio no encontrado";
+                    TempData["Error"] = "Documento no encontrado";
                     return RedirectToAction("Index");
                 }
 
-                // Obtener encargado departamental
+                // DETERMINAR SI ES CERTIFICACIÓN
+                var esCertificacion = EsCertificacion(oficio.TipoOficio?.Nombre);
+
                 var encargadoDepartamental = await _context.Usuarios
                     .Where(u => u.DepartamentoId == oficio.DepartamentoId &&
                                u.EsEncargadoDepartamental &&
@@ -191,24 +212,46 @@ namespace OfiGest.Context.Controllers
                     .Select(u => $"{u.Nombre} {u.Apellido}".Trim())
                     .FirstOrDefaultAsync();
 
-                var pdfModel = new OficioPdfModel
+                if (esCertificacion)
                 {
-                    Codigo = oficio.Codigo ?? "",
-                    FechaCreacion = oficio.FechaCreacion,
-                    DepartamentoRemitente = oficio.DepartamentoRemitente?.Nombre ?? "",
-                    DirigidoDepartamento = oficio.DirigidoDepartamento ?? "",
-                    TipoOficio = oficio.TipoOficio?.Nombre ?? "",
-                    Via = oficio.Via ?? "",
-                    Contenido = oficio.Contenido ?? "",
-                    Anexos = oficio.Anexos ?? "",
-                    EncargadoDepartamental = encargadoDepartamental ?? "Encargado Departamental"
-                };
+                    var certificacionModel = new CertificacionPdfModel
+                    {
+                        Codigo = oficio.Codigo ?? "",
+                        FechaCreacion = oficio.FechaCreacion,
+                        DepartamentoRemitente = oficio.DepartamentoRemitente?.Nombre ?? "",
+                        Contenido = oficio.Contenido ?? "",
+                        Anexos = oficio.Anexos ?? "",
+                        EncargadoDepartamental = encargadoDepartamental ?? "Encargado Departamental",
+                        CargoFirmante = "Jefe de Departamento"
+                    };
 
-                var pdfManager = new PdfOficioManager();
-                var pdfBytes = pdfManager.GenerarPdf(pdfModel);
-                var fileName = pdfManager.ObtenerNombreArchivo(pdfModel);
+                    var certificacionManager = new PdfCertificacionManager();
+                    var pdfBytes = certificacionManager.GenerarPdf(certificacionModel);
+                    var fileName = certificacionManager.ObtenerNombreArchivo(certificacionModel);
 
-                return File(pdfBytes, "application/pdf", fileName);
+                    return File(pdfBytes, "application/pdf", fileName);
+                }
+                else
+                {
+                    var pdfModel = new OficioPdfModel
+                    {
+                        Codigo = oficio.Codigo ?? "",
+                        FechaCreacion = oficio.FechaCreacion,
+                        DepartamentoRemitente = oficio.DepartamentoRemitente?.Nombre ?? "",
+                        DirigidoDepartamento = oficio.DirigidoDepartamento ?? "",
+                        TipoOficio = oficio.TipoOficio?.Nombre ?? "",
+                        Via = oficio.Via ?? "",
+                        Contenido = oficio.Contenido ?? "",
+                        Anexos = oficio.Anexos ?? "",
+                        EncargadoDepartamental = encargadoDepartamental ?? "Encargado Departamental"
+                    };
+
+                    var pdfManager = new PdfOficioManager();
+                    var pdfBytes = pdfManager.GenerarPdf(pdfModel);
+                    var fileName = pdfManager.ObtenerNombreArchivo(pdfModel);
+
+                    return File(pdfBytes, "application/pdf", fileName);
+                }
             }
             catch (Exception ex)
             {
@@ -216,7 +259,6 @@ namespace OfiGest.Context.Controllers
                 return RedirectToAction("Index");
             }
         }
-
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(OficioModel oficio)
@@ -224,7 +266,7 @@ namespace OfiGest.Context.Controllers
             var departamentoUsuario = HttpContext.Session.GetString("NombreDepartamento");
             if (oficio.DirigidoDepartamento == departamentoUsuario)
             {
-                ViewData["Error"] = "No puedes dirigir un oficio a tu propio departamento.";
+                ViewData["Error"] = "No puedes dirigir un documento a tu propio departamento.";
                 await CargarListasAsync(oficio.TipoOficioId, oficio.DirigidoDepartamento);
                 return View(oficio);
             }
@@ -258,36 +300,35 @@ namespace OfiGest.Context.Controllers
             {
                 var generarPdf = Request.Form["Descargar"].ToString() == "true";
 
-                // Crear oficio sin PDF primero
+                // Crear documento
                 var resultado = await _managerOficio.CrearOficioAsync(oficio, usuarioId.Value, false);
 
                 if (resultado.Success)
                 {
-                    // Obtener el ID del oficio recién creado
-                    var oficioCreado = await _context.Oficios
+                    // Obtener el ID del documento recién creado
+                    var documentoCreado = await _context.Oficios
                         .Where(o => o.UsuarioId == usuarioId.Value)
                         .OrderByDescending(o => o.FechaCreacion)
                         .FirstOrDefaultAsync();
 
-                    if (oficioCreado != null)
+                    if (documentoCreado != null)
                     {
                         if (generarPdf)
                         {
-                            // Guardar el ID en TempData para generar PDF después
-                            TempData["OficioCreadoId"] = oficioCreado.Id;
-                            TempData["Success"] = "Oficio creado correctamente. El PDF se descargará automáticamente.";
+                            // Guardar el ID en TempData para la descarga automática
+                            TempData["OficioCreadoId"] = documentoCreado.Id;
+                            TempData["Success"] = "Documento creado correctamente. El PDF se descargará automáticamente.";
                         }
                         else
                         {
-                            TempData["Success"] = "Oficio creado correctamente.";
+                            TempData["Success"] = "Documento creado correctamente.";
                         }
 
-                        // SIEMPRE redirigir al Index
                         return RedirectToAction("Index");
                     }
                 }
 
-                ViewData["Error"] = "Error al crear el oficio. Verifica los datos o permisos.";
+                ViewData["Error"] = "Error al crear el documento. Verifica los datos o permisos.";
                 await CargarListasAsync(oficio.TipoOficioId, oficio.DirigidoDepartamento);
                 return View(oficio);
             }
@@ -306,16 +347,15 @@ namespace OfiGest.Context.Controllers
             var departamentoUsuario = HttpContext.Session.GetString("NombreDepartamento");
             if (modelo.DirigidoDepartamento == departamentoUsuario)
             {
-                TempData["Error"] = "Tu departamento actual coincide con el destino del oficio. Modifica el destino para mantener la trazabilidad institucional.";
+                TempData["Error"] = "Tu departamento actual coincide con el destino del documento. Modifica el destino para mantener la trazabilidad institucional.";
                 await CargarListasAsync(modelo.TipoOficioId, modelo.DirigidoDepartamento);
                 return View(modelo);
             }
-          
 
             var original = await _managerOficio.ObtenerPorIdAsync(modelo.Id);
             if (original == null)
             {
-                TempData["Error"] = "Oficio no encontrado.";
+                TempData["Error"] = "Documento no encontrado.";
                 return RedirectToAction("Index");
             }
 
@@ -334,7 +374,6 @@ namespace OfiGest.Context.Controllers
                 return View(modelo);
             }
 
-
             ModelStateHelper.LimpiarPropiedadesNoValidables(ModelState,
               nameof(modelo.Anexos),
               nameof(modelo.ApellidoUsuario),
@@ -345,8 +384,8 @@ namespace OfiGest.Context.Controllers
               nameof(modelo.NombreTipoOficio),
               nameof(modelo.NombreUsuario),
               nameof(modelo.Codigo)
+            );
 
-          );
             if (!ModelState.IsValid)
             {
                 await CargarListasAsync(modelo.TipoOficioId, modelo.DirigidoDepartamento);
@@ -364,8 +403,8 @@ namespace OfiGest.Context.Controllers
             {
                 var actualizado = await _managerOficio.ActualizarOficioAsync(modelo, usuarioId.Value);
                 TempData[actualizado ? "Success" : "Error"] = actualizado
-                    ? "Oficio modificado correctamente."
-                    : "Error al modificar el oficio. No se realizaron los cambios en la base de datos.";
+                    ? "Documento modificado correctamente."
+                    : "Error al modificar el documento. No se realizaron los cambios en la base de datos.";
 
                 return RedirectToAction("Index");
             }
@@ -397,11 +436,32 @@ namespace OfiGest.Context.Controllers
             ViewBag.TiposOficio = new SelectList(tiposOficio, "Id", "Nombre", tipoOficioId);
             ViewBag.Departamentos = new SelectList(departamentosFiltrados, "Nombre", "Nombre", DirigidoDepartamento);
         }
+
         private int? ObtenerUsuarioId()
         {
             var claimId = User.FindFirst("Id")?.Value;
             return int.TryParse(claimId, out int id) ? id : null;
         }
-      
+
+     
+        /// Determina si el tipo de documento es una certificación
+        private bool EsCertificacion(string? tipoDocumento)
+        {
+            if (string.IsNullOrWhiteSpace(tipoDocumento))
+                return false;
+
+            var tiposCertificacion = new[]
+            {
+                "certificacion",
+                "certificación",
+                "certificado",
+                "constancia",
+                "certify",
+                "certificate"
+            };
+
+            return tiposCertificacion.Any(tipo =>
+                tipoDocumento.Trim().ToLower().Contains(tipo));
+        }
     }
 }
