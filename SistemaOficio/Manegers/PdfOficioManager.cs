@@ -17,7 +17,7 @@ namespace OfiGest.Manegers
             {
                 container.Page(page =>
                 {
-                    // Configuración base
+  
                     page.Size(PageSizes.Letter);
                     page.MarginLeft(2, Unit.Centimetre);
                     page.MarginRight(2, Unit.Centimetre);
@@ -26,7 +26,6 @@ namespace OfiGest.Manegers
                     page.PageColor(Colors.White);
                     page.DefaultTextStyle(x => x.FontSize(11).FontFamily("Arial"));
 
-                    // Encabezado institucional
                     page.Header().Column(column =>
                     {
                         column.Spacing(5);
@@ -41,12 +40,11 @@ namespace OfiGest.Manegers
                             .FontFamily("Times New Roman").FontSize(16).Bold();
                     });
 
-                    // Contenido principal y firma
+ 
                     page.Content().Column(column =>
                     {
                         column.Spacing(15);
 
-                        // Encabezado del oficio
                         column.Item().Padding(5).Column(innerColumn =>
                         {
                             innerColumn.Spacing(4);
@@ -93,13 +91,13 @@ namespace OfiGest.Manegers
                             innerColumn.Item().LineHorizontal(1).LineColor(Colors.Grey.Darken2);
                         });
 
-                        // Cuerpo del oficio - MEJORADO
+          
                         if (!string.IsNullOrWhiteSpace(modelo.Contenido))
                         {
                             column.Item().Text("Por medio del presente oficio, solicitamos amablemente:")
                                 .SemiBold().FontSize(12);
 
-                            // Renderizar contenido HTML convertido a formato QuestPDF
+                  
                             column.Item().Padding(10).Background(Colors.White)
                                 .Element(container => RenderHtmlContent(container, modelo.Contenido));
 
@@ -107,15 +105,13 @@ namespace OfiGest.Manegers
                                 column.Item().LineHorizontal(1).LineColor(Colors.Grey.Darken2);
                         }
 
-                      
-                        // Anexos
+     
                         if (!string.IsNullOrWhiteSpace(modelo.Anexos))
                         {
                             column.Item().Text("ANEXOS:").Bold().FontSize(11);
                             column.Item().Text(modelo.Anexos);
                         }
 
-                        // Firma institucional extendida al fondo
                         column.Item().Extend().AlignBottom().Column(firmaColumn =>
                         {
                             firmaColumn.Spacing(10);
@@ -137,7 +133,6 @@ namespace OfiGest.Manegers
                         });
                     });
 
-                    // Footer institucional
                     page.Footer()
                         .PaddingTop(10)
                         .AlignCenter()
@@ -160,20 +155,17 @@ namespace OfiGest.Manegers
             return document.GeneratePdf();
         }
 
-        /// <summary>
-        /// Renderiza contenido HTML manteniendo el formato básico
-        /// </summary>
+
         private void RenderHtmlContent(IContainer container, string htmlContent)
         {
             if (string.IsNullOrWhiteSpace(htmlContent))
                 return;
 
-            // Limpiar y normalizar el HTML
             var cleanedHtml = CleanHtml(htmlContent);
 
             container.Column(column =>
             {
-                // Procesar el contenido HTML completo
+          
                 var documentElements = ParseHtmlDocument(cleanedHtml);
 
                 foreach (var element in documentElements)
@@ -197,9 +189,6 @@ namespace OfiGest.Manegers
             });
         }
 
-        /// <summary>
-        /// Parsea el documento HTML en elementos estructurados - MÉTODO SIMPLIFICADO Y CORREGIDO
-        /// </summary>
         private List<HtmlElement> ParseHtmlDocument(string html)
         {
             var elements = new List<HtmlElement>();
@@ -207,12 +196,10 @@ namespace OfiGest.Manegers
             if (string.IsNullOrWhiteSpace(html))
                 return elements;
 
-            // ENFOQUE SIMPLIFICADO: Extraer elementos en orden usando un método más robusto
             elements.AddRange(ExtractHeadings(html));
             elements.AddRange(ExtractParagraphs(html));
             elements.AddRange(ExtractListItems(html));
 
-            // Si no se encontraron elementos, tratar todo como un párrafo
             if (elements.Count == 0)
             {
                 var cleanText = ExtractTextFromHtml(html);
@@ -229,9 +216,6 @@ namespace OfiGest.Manegers
             return elements;
         }
 
-        /// <summary>
-        /// Extrae encabezados del HTML
-        /// </summary>
         private List<HtmlElement> ExtractHeadings(string html)
         {
             var headings = new List<HtmlElement>();
@@ -258,9 +242,7 @@ namespace OfiGest.Manegers
             return headings;
         }
 
-        /// <summary>
-        /// Extrae párrafos del HTML
-        /// </summary>
+
         private List<HtmlElement> ExtractParagraphs(string html)
         {
             var paragraphs = new List<HtmlElement>();
@@ -286,9 +268,6 @@ namespace OfiGest.Manegers
             return paragraphs;
         }
 
-        /// <summary>
-        /// Extrae elementos de lista del HTML
-        /// </summary>
         private List<HtmlElement> ExtractListItems(string html)
         {
             var listItems = new List<HtmlElement>();
@@ -323,7 +302,7 @@ namespace OfiGest.Manegers
                 }
             }
 
-            // Procesar listas ordenadas
+
             var olMatches = Regex.Matches(html, @"<ol[^>]*>(.*?)</ol>",
                 RegexOptions.Singleline | RegexOptions.IgnoreCase);
 
@@ -354,86 +333,70 @@ namespace OfiGest.Manegers
                         }
                     }
                 }
-                itemNumber = 1; // Reset para la siguiente lista
+                itemNumber = 1; 
             }
 
             return listItems;
         }
 
-        /// <summary>
-        /// Obtiene el nivel del encabezado (1-6)
-        /// </summary>
+
         private int GetHeadingLevel(string tagName)
         {
             if (tagName.Length == 2 && char.IsDigit(tagName[1]))
             {
                 return int.Parse(tagName[1].ToString());
             }
-            return 2; // Nivel por defecto
+            return 2; 
         }
 
-        /// <summary>
-        /// Extrae texto manteniendo formato básico de las etiquetas
-        /// </summary>
         private string ExtractTextFromHtml(string html)
         {
             if (string.IsNullOrWhiteSpace(html))
                 return html;
 
-            // Decodificar entidades HTML
+        
             html = System.Net.WebUtility.HtmlDecode(html);
 
-            // Reemplazar saltos de línea HTML
+
             html = html.Replace("<br>", "\n")
                        .Replace("<br/>", "\n")
                        .Replace("<br />", "\n");
 
-            // Limpiar etiquetas no compatibles pero mantener formato básico
             html = Regex.Replace(html, @"</?(div|span|font|html|body|head|meta|title|link|script|style)[^>]*>", "",
                                 RegexOptions.IgnoreCase | RegexOptions.Singleline);
 
-            // Limpiar atributos pero mantener etiquetas de formato
             html = Regex.Replace(html, @"<(\w+)[^>]*>", "<$1>", RegexOptions.IgnoreCase);
 
-            // Normalizar espacios pero mantener estructura básica
+
             html = Regex.Replace(html, @"\s+", " ");
             html = html.Replace("\n ", "\n").Replace(" \n", "\n");
 
             return html.Trim();
         }
 
-        /// <summary>
-        /// Limpia el HTML manteniendo solo formatos básicos compatibles
-        /// </summary>
         private string CleanHtml(string html)
         {
             if (string.IsNullOrWhiteSpace(html))
                 return html;
 
-            // Normalizar etiquetas de formato
             html = html.Replace("<strong>", "<b>").Replace("</strong>", "</b>")
                        .Replace("<em>", "<i>").Replace("</em>", "</i>");
 
-            // Remover etiquetas problemáticas pero mantener el contenido
             html = Regex.Replace(html, @"</?(div|span|font|html|body|head|meta|title|link|script|style)[^>]*>", "",
                                 RegexOptions.IgnoreCase | RegexOptions.Singleline);
 
-            // Limpiar atributos de estilo y clases
             html = Regex.Replace(html, @"\s+(style|class|id|data-[^=]+)=""[^""]*""", "",
                                 RegexOptions.IgnoreCase | RegexOptions.Singleline);
 
             return html.Trim();
         }
 
-        /// <summary>
-        /// Renderiza texto con formato básico - CORREGIDO: LISTAS SIN NEGRITA POR DEFECTO
-        /// </summary>
         private void RenderFormattedText(TextDescriptor text, HtmlElement element)
         {
             switch (element.Type)
             {
                 case HtmlElementType.Heading:
-                    // Renderizar encabezados con estilo diferente
+ 
                     var fontSize = element.HeadingLevel switch
                     {
                         1 => 14,
@@ -449,23 +412,23 @@ namespace OfiGest.Manegers
                     break;
 
                 case HtmlElementType.ListItem:
-                    // Para elementos de lista, agregar viñeta o número SIN NEGRITA POR DEFECTO
+      
                     if (element.IsOrderedList && element.ItemNumber.HasValue)
                     {
-                        text.Span($"{element.ItemNumber}. ").FontSize(11); // SIN .SemiBold()
+                        text.Span($"{element.ItemNumber}. ").FontSize(11);
                     }
                     else
                     {
-                        text.Span("• ").FontSize(11); // SIN .SemiBold()
+                        text.Span("• ").FontSize(11);
                     }
 
-                    // Procesar el contenido con formato - RESPETAR EL FORMATO DEL USUARIO
+     
                     var listSegments = ParseTextSegments(element.Text);
                     foreach (var segment in listSegments)
                     {
                         var textSpan = text.Span(segment.Text).FontSize(11);
 
-                        // SOLO APLICAR FORMATOS SI EL USUARIO LOS APLICÓ
+
                         if (segment.IsBold) textSpan = textSpan.Bold();
                         if (segment.IsItalic) textSpan = textSpan.Italic();
                         if (segment.IsUnderline) textSpan = textSpan.Underline();
@@ -474,7 +437,7 @@ namespace OfiGest.Manegers
 
                 case HtmlElementType.Paragraph:
                 default:
-                    // Procesar párrafos normales
+
                     var segments = ParseTextSegments(element.Text);
                     foreach (var segment in segments)
                     {
@@ -488,9 +451,6 @@ namespace OfiGest.Manegers
             }
         }
 
-        /// <summary>
-        /// Parsea segmentos de texto con formato
-        /// </summary>
         private List<TextSegment> ParseTextSegments(string html)
         {
             var segments = new List<TextSegment>();
@@ -501,11 +461,11 @@ namespace OfiGest.Manegers
             {
                 if (html[i] == '<')
                 {
-                    // Procesar etiqueta
+  
                     var tagEnd = html.IndexOf('>', i);
                     if (tagEnd > i)
                     {
-                        // Guardar texto acumulado antes de la etiqueta
+        
                         if (currentText.Length > 0)
                         {
                             segments.Add(CreateTextSegment(currentText.ToString(), formatStack));
@@ -516,12 +476,12 @@ namespace OfiGest.Manegers
                         var isClosingTag = tagContent.StartsWith("/");
                         var tagName = isClosingTag ? tagContent.Substring(1) : tagContent;
 
-                        // Tomar solo el nombre de la etiqueta (sin atributos)
+   
                         tagName = tagName.Split(' ')[0].Trim();
 
                         if (isClosingTag)
                         {
-                            // Etiqueta de cierre
+                    
                             if (formatStack.Count > 0 && formatStack.Peek() == tagName)
                             {
                                 formatStack.Pop();
@@ -529,7 +489,7 @@ namespace OfiGest.Manegers
                         }
                         else
                         {
-                            // Etiqueta de apertura
+                      
                             if (IsSupportedTag(tagName))
                             {
                                 formatStack.Push(tagName);
@@ -549,7 +509,6 @@ namespace OfiGest.Manegers
                 }
             }
 
-            // Agregar el último segmento
             if (currentText.Length > 0)
             {
                 segments.Add(CreateTextSegment(currentText.ToString(), formatStack));
@@ -581,7 +540,7 @@ namespace OfiGest.Manegers
             return supportedTags.Contains(tag);
         }
 
-        // Enumeración para tipos de elementos HTML
+ 
         private enum HtmlElementType
         {
             Paragraph,
@@ -589,7 +548,6 @@ namespace OfiGest.Manegers
             Heading
         }
 
-        // Clase para elementos HTML estructurados
         private class HtmlElement
         {
             public string Text { get; set; }
@@ -599,7 +557,6 @@ namespace OfiGest.Manegers
             public int HeadingLevel { get; set; } = 2;
         }
 
-        // Clase auxiliar para segmentos de texto
         private class TextSegment
         {
             public string Text { get; set; }
@@ -608,7 +565,7 @@ namespace OfiGest.Manegers
             public bool IsUnderline { get; set; }
         }
 
-        // Método existente para nombre de archivo
+
         public string ObtenerNombreArchivo(OficioPdfModel modelo)
         {
             var nombreLimpio = RemoveDiacritics(modelo.Codigo)

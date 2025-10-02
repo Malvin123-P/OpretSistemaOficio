@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿
+using Microsoft.EntityFrameworkCore;
 using OfiGest.Context;
 using OfiGest.Entities;
 using OfiGest.Utilities;
@@ -22,11 +23,12 @@ namespace OfiGest.Manegers
                 .FirstOrDefault(u => u.Correo == correo);
 
             if (usuario == null || !contraseña.VerifyPassword(usuario.Contraseña!))
+
                 return new ResultadoLogin { Usuario = null };
 
             bool esPrimerAcceso = usuario.UltimoAcceso == null;
 
-       
+
             if (!usuario.Activo || usuario.RequiereRestablecer)
             {
                 return new ResultadoLogin
@@ -45,7 +47,6 @@ namespace OfiGest.Manegers
         }
 
 
-
         public async Task ActualizarUltimoAccesoAsync(int usuarioId)
         {
             var usuario = await _context.Usuarios.FindAsync(usuarioId);
@@ -62,8 +63,5 @@ namespace OfiGest.Manegers
             public Usuario? Usuario { get; set; }
             public bool EsPrimerAcceso { get; set; } = false;
         }
-
-     
     }
-
 }

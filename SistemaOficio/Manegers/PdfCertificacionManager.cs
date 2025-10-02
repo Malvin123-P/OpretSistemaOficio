@@ -17,7 +17,7 @@ namespace OfiGest.Manegers
             {
                 container.Page(page =>
                 {
-                    // Configuración base (mismo formato que oficios)
+                
                     page.Size(PageSizes.Letter);
                     page.MarginLeft(2, Unit.Centimetre);
                     page.MarginRight(2, Unit.Centimetre);
@@ -26,7 +26,6 @@ namespace OfiGest.Manegers
                     page.PageColor(Colors.White);
                     page.DefaultTextStyle(x => x.FontSize(11).FontFamily("Arial"));
 
-                    // Encabezado institucional (mismo que oficios)
                     page.Header().Column(column =>
                     {
                         column.Spacing(5);
@@ -69,14 +68,14 @@ namespace OfiGest.Manegers
                             innerColumn.Item().LineHorizontal(1).LineColor(Colors.Grey.Darken2);
                         });
 
-                        // Cuerpo de la certificación
+                      
                         if (!string.IsNullOrWhiteSpace(modelo.Contenido))
                         {
                             column.Item().Padding(5).Background(Colors.White)
                                 .Element(container => RenderHtmlContent(container, modelo.Contenido));
                         }
 
-                        // Anexos (si aplica)
+                  
                         if (!string.IsNullOrWhiteSpace(modelo.Anexos))
                         {
                             column.Item().LineHorizontal(1).LineColor(Colors.Grey.Darken2);
@@ -84,7 +83,7 @@ namespace OfiGest.Manegers
                             column.Item().Text(modelo.Anexos);
                         }
 
-                        // Firma institucional
+                      
                         column.Item().Extend().AlignBottom().Column(firmaColumn =>
                         {
                             firmaColumn.Spacing(10);
@@ -108,7 +107,7 @@ namespace OfiGest.Manegers
                         });
                     });
 
-                    // Footer institucional (mismo que oficios)
+                  
                     page.Footer()
                         .PaddingTop(10)
                         .AlignCenter()
@@ -131,9 +130,6 @@ namespace OfiGest.Manegers
             return document.GeneratePdf();
         }
 
-        /// <summary>
-        /// Renderiza contenido HTML manteniendo el formato básico
-        /// </summary>
         private void RenderHtmlContent(IContainer container, string htmlContent)
         {
             if (string.IsNullOrWhiteSpace(htmlContent))
@@ -166,9 +162,6 @@ namespace OfiGest.Manegers
             });
         }
 
-        /// <summary>
-        /// Parsea el documento HTML en elementos estructurados
-        /// </summary>
         private List<HtmlElement> ParseHtmlDocument(string html)
         {
             var elements = new List<HtmlElement>();
@@ -196,9 +189,6 @@ namespace OfiGest.Manegers
             return elements;
         }
 
-        /// <summary>
-        /// Extrae encabezados del HTML
-        /// </summary>
         private List<HtmlElement> ExtractHeadings(string html)
         {
             var headings = new List<HtmlElement>();
@@ -225,9 +215,6 @@ namespace OfiGest.Manegers
             return headings;
         }
 
-        /// <summary>
-        /// Extrae párrafos del HTML
-        /// </summary>
         private List<HtmlElement> ExtractParagraphs(string html)
         {
             var paragraphs = new List<HtmlElement>();
@@ -253,14 +240,11 @@ namespace OfiGest.Manegers
             return paragraphs;
         }
 
-        /// <summary>
-        /// Extrae elementos de lista del HTML
-        /// </summary>
         private List<HtmlElement> ExtractListItems(string html)
         {
             var listItems = new List<HtmlElement>();
 
-            // Procesar listas no ordenadas
+         
             var ulMatches = Regex.Matches(html, @"<ul[^>]*>(.*?)</ul>",
                 RegexOptions.Singleline | RegexOptions.IgnoreCase);
 
@@ -290,7 +274,7 @@ namespace OfiGest.Manegers
                 }
             }
 
-            // Procesar listas ordenadas
+         
             var olMatches = Regex.Matches(html, @"<ol[^>]*>(.*?)</ol>",
                 RegexOptions.Singleline | RegexOptions.IgnoreCase);
 
@@ -327,9 +311,6 @@ namespace OfiGest.Manegers
             return listItems;
         }
 
-        /// <summary>
-        /// Obtiene el nivel del encabezado
-        /// </summary>
         private int GetHeadingLevel(string tagName)
         {
             if (tagName.Length == 2 && char.IsDigit(tagName[1]))
@@ -339,9 +320,6 @@ namespace OfiGest.Manegers
             return 2;
         }
 
-        /// <summary>
-        /// Extrae texto manteniendo formato básico
-        /// </summary>
         private string ExtractTextFromHtml(string html)
         {
             if (string.IsNullOrWhiteSpace(html))
@@ -364,9 +342,6 @@ namespace OfiGest.Manegers
             return html.Trim();
         }
 
-        /// <summary>
-        /// Limpia el HTML manteniendo solo formatos básicos
-        /// </summary>
         private string CleanHtml(string html)
         {
             if (string.IsNullOrWhiteSpace(html))
@@ -384,9 +359,6 @@ namespace OfiGest.Manegers
             return html.Trim();
         }
 
-        /// <summary>
-        /// Renderiza texto con formato básico
-        /// </summary>
         private void RenderFormattedText(TextDescriptor text, HtmlElement element)
         {
             switch (element.Type)
@@ -442,9 +414,6 @@ namespace OfiGest.Manegers
             }
         }
 
-        /// <summary>
-        /// Parsea segmentos de texto con formato
-        /// </summary>
         private List<TextSegment> ParseTextSegments(string html)
         {
             var segments = new List<TextSegment>();
@@ -528,7 +497,6 @@ namespace OfiGest.Manegers
             return supportedTags.Contains(tag);
         }
 
-        // Enumeración para tipos de elementos HTML
         private enum HtmlElementType
         {
             Paragraph,
@@ -536,7 +504,6 @@ namespace OfiGest.Manegers
             Heading
         }
 
-        // Clase para elementos HTML estructurados
         private class HtmlElement
         {
             public string Text { get; set; }
@@ -546,7 +513,6 @@ namespace OfiGest.Manegers
             public int HeadingLevel { get; set; } = 2;
         }
 
-        // Clase auxiliar para segmentos de texto
         private class TextSegment
         {
             public string Text { get; set; }
@@ -555,9 +521,7 @@ namespace OfiGest.Manegers
             public bool IsUnderline { get; set; }
         }
 
-        /// <summary>
-        /// Obtiene el nombre del archivo PDF para certificaciones
-        /// </summary>
+    
         public string ObtenerNombreArchivo(CertificacionPdfModel modelo)
         {
             var nombreLimpio = RemoveDiacritics(modelo.Codigo)
@@ -587,7 +551,6 @@ namespace OfiGest.Manegers
         }
     }
 
-    // Modelo para certificaciones (debes crear esta clase)
     public class CertificacionPdfModel
     {
         public string Codigo { get; set; }

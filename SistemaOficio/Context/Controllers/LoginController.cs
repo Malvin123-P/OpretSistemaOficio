@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authentication;
+﻿
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using OfiGest.Manegers;
@@ -19,9 +20,10 @@ namespace OfiGest.Context.Controllers
         [HttpGet]
         public IActionResult Index()
         {
-          
+
             return View(new LoginModel());
         }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Index(LoginModel model)
@@ -80,7 +82,7 @@ namespace OfiGest.Context.Controllers
 
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
             return RedirectToAction("Index", "Oficio");
-            
+
         }
 
         [HttpGet]

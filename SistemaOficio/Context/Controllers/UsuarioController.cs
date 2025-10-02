@@ -111,8 +111,7 @@ namespace OfiGest.Controllers
                 return View(model);
             }
 
-            var dominiosPermitidos = Environment.GetEnvironmentVariable("SeguridadCorreo_DominiosPermitidos").Split();
-
+            var dominiosPermitidos = Environment.GetEnvironmentVariable("SeguridadCorreo_DominiosPermitidos").Split(',');
             bool correoValido = dominiosPermitidos.Any(d => model.Correo.EndsWith(d, StringComparison.OrdinalIgnoreCase));
 
             if (!correoValido)
@@ -195,7 +194,7 @@ namespace OfiGest.Controllers
                 }
             }
 
-            var dominiosPermitidos = Environment.GetEnvironmentVariable("DominiosPermitidos").Split(',');
+            var dominiosPermitidos = Environment.GetEnvironmentVariable("SeguridadCorreo_DominiosPermitidos").Split(',');
             bool correoValido = dominiosPermitidos.Any(d => model.Correo.EndsWith(d, StringComparison.OrdinalIgnoreCase));
 
             if (!correoValido)
@@ -320,7 +319,7 @@ namespace OfiGest.Controllers
                 if (!System.IO.File.Exists(rutaCompleta))
                     return NotFound();
 
-                // Determinar el tipo MIME correcto basado en la extensión del archivo
+             
                 var extension = Path.GetExtension(rutaCompleta).ToLower();
                 var tipoMime = extension switch
                 {

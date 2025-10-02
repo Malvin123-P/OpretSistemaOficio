@@ -44,7 +44,6 @@ namespace OfiGest.Context.Controllers
                     return RedirectToAction(nameof(Index));
                 }
 
-                // DETERMINAR SI ES CERTIFICACIÓN U OFICIO
                 var esCertificacion = EsCertificacion(oficio.TipoOficio?.Nombre);
 
                 var encargadoDepartamental = await _context.Usuarios
@@ -56,7 +55,7 @@ namespace OfiGest.Context.Controllers
 
                 if (esCertificacion)
                 {
-                    // USAR MANAGER DE CERTIFICACIONES
+                  
                     var certificacionModel = new CertificacionPdfModel
                     {
                         Codigo = oficio.Codigo ?? "",
@@ -65,7 +64,7 @@ namespace OfiGest.Context.Controllers
                         Contenido = oficio.Contenido ?? "",
                         Anexos = oficio.Anexos ?? "",
                         EncargadoDepartamental = encargadoDepartamental ?? "Encargado Departamental",
-                        CargoFirmante = "Jefe de Departamento" // Puedes personalizar esto
+                        CargoFirmante = "Jefe de Departamento"
                     };
 
                     var certificacionManager = new PdfCertificacionManager();
@@ -76,7 +75,7 @@ namespace OfiGest.Context.Controllers
                 }
                 else
                 {
-                    // USAR MANAGER DE OFICIOS
+                   
                     var pdfModel = new OficioPdfModel
                     {
                         Codigo = oficio.Codigo ?? "",
@@ -202,7 +201,7 @@ namespace OfiGest.Context.Controllers
                     return RedirectToAction("Index");
                 }
 
-                // DETERMINAR SI ES CERTIFICACIÓN
+           
                 var esCertificacion = EsCertificacion(oficio.TipoOficio?.Nombre);
 
                 var encargadoDepartamental = await _context.Usuarios
@@ -300,12 +299,12 @@ namespace OfiGest.Context.Controllers
             {
                 var generarPdf = Request.Form["Descargar"].ToString() == "true";
 
-                // Crear documento
+            
                 var resultado = await _managerOficio.CrearOficioAsync(oficio, usuarioId.Value, false);
 
                 if (resultado.Success)
                 {
-                    // Obtener el ID del documento recién creado
+                   
                     var documentoCreado = await _context.Oficios
                         .Where(o => o.UsuarioId == usuarioId.Value)
                         .OrderByDescending(o => o.FechaCreacion)
@@ -315,7 +314,7 @@ namespace OfiGest.Context.Controllers
                     {
                         if (generarPdf)
                         {
-                            // Guardar el ID en TempData para la descarga automática
+                        
                             TempData["OficioCreadoId"] = documentoCreado.Id;
                             TempData["Success"] = "Documento creado correctamente. El PDF se descargará automáticamente.";
                         }
@@ -443,8 +442,7 @@ namespace OfiGest.Context.Controllers
             return int.TryParse(claimId, out int id) ? id : null;
         }
 
-     
-        /// Determina si el tipo de documento es una certificación
+    
         private bool EsCertificacion(string? tipoDocumento)
         {
             if (string.IsNullOrWhiteSpace(tipoDocumento))

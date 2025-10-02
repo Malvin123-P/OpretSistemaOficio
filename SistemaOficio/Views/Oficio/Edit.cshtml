@@ -522,7 +522,7 @@
                     return;
                 }
 
-                // Validar URL de anexos si se proporciona
+                // Validar URL de anexos si se proporciona - SOLO SWAL, SIN ESTILOS EN EL INPUT
                 const anexosUrl = $('[name="Anexos"]').val().trim();
                 if (anexosUrl && !esUrlValida(anexosUrl)) {
                     Swal.fire({
@@ -797,17 +797,6 @@
                 }, 50);
             });
 
-            // Validación en tiempo real para campos de texto
-            $('input[type="text"], input[type="url"]').on('blur', function() {
-                const input = $(this);
-                if (input.val().trim() && input.is('[type="url"]') && !esUrlValida(input.val())) {
-                    input.addClass('is-invalid');
-                    input.after('<div class="invalid-feedback">Por favor ingrese una URL válida</div>');
-                } else {
-                    input.removeClass('is-invalid');
-                    input.next('.invalid-feedback').remove();
-                }
-            });
 
             // Restaurar estado del botón si hay una recarga de página
             $(window).on('beforeunload', function() {

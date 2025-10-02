@@ -136,7 +136,7 @@
         min-width: 0;
     }
 
-    /* Corrección ortográfica - Estilos mejorados */
+   
     .note-editable[spellcheck="true"] {
         text-rendering: optimizeLegibility;
         -webkit-font-smoothing: antialiased;
@@ -460,7 +460,7 @@
                     return;
                 }
 
-                // Validar URL de anexos si se proporciona
+                // Validar URL de anexos si se proporciona - SOLO SWAL, SIN ESTILOS EN EL INPUT
                 const anexosUrl = $('[name="Anexos"]').val().trim();
                 if (anexosUrl && !esUrlValida(anexosUrl)) {
                     Swal.fire({
@@ -625,17 +625,8 @@
                 }
             });
 
-            // Validación en tiempo real para campos de texto
-            $('input[type="text"], input[type="url"]').on('blur', function() {
-                const input = $(this);
-                if (input.val().trim() && input.is('[type="url"]') && !esUrlValida(input.val())) {
-                    input.addClass('is-invalid');
-                    input.after('<div class="invalid-feedback">Por favor ingrese una URL válida</div>');
-                } else {
-                    input.removeClass('is-invalid');
-                    input.next('.invalid-feedback').remove();
-                }
-            });
+            // REMOVIDO: Validación en tiempo real para campos de texto
+            // Ya no se muestra el mensaje de error ni se pone rojo el input
 
             // Botón de ejemplo (opcional - puedes remover si no lo necesitas)
             $('#btn-ejemplo').on('click', function() {

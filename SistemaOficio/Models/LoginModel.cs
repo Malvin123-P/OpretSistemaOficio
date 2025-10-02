@@ -21,7 +21,7 @@ namespace OfiGest.Models
             var emailValido = new EmailAddressAttribute().IsValid(Correo);
             if (emailValido)
             {
-            
+
                 var dominiosPermitidos = Environment.GetEnvironmentVariable("SeguridadCorreo_DominiosPermitidos").Split(',');
                 if (dominiosPermitidos != null &&
                     !dominiosPermitidos.Any(d => Correo.EndsWith(d, StringComparison.OrdinalIgnoreCase)))

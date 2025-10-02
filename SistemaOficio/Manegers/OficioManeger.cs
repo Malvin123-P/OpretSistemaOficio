@@ -71,13 +71,13 @@ namespace OfiGest.Managers
                     oficio.DepartamentoRemitente?.Nombre ?? "Departamento"
                 );
 
-                // Generar PDF si se solicita
+              
                 byte[]? pdfBytes = null;
                 string? fileName = null;
 
                 if (generarPdf)
                 {
-                    // OBTENER EL ENCARGADO DEPARTAMENTAL
+             
                     var encargadoDepartamental = await _context.Usuarios
                         .Where(u => u.DepartamentoId == usuario.DepartamentoId &&
                                    u.EsEncargadoDepartamental &&
@@ -167,7 +167,7 @@ namespace OfiGest.Managers
 
             if (actualizado)
             {
-                // Recargar la propiedad de navegación actualizada
+            
                 await _context.Entry(oficio).Reference(o => o.TipoOficio).LoadAsync();
 
                 var logger = new LogOficioHelper(_context);

@@ -110,7 +110,7 @@
                     confirmButtonText: "Entendido",
                     confirmButtonColor: "#3D6FAD"
                 });
-            }else if (ValidacionMessage) {
+            } else if (ValidacionMessage) {
                 Swal.fire({
                     icon: "error",
                     title: "¡Atención!",
@@ -120,28 +120,80 @@
                 });
             }
 
-
             const nombreInput = $('[name="Nombre"]');
             const inicialesInput = $('[name="Iniciales"]');
             const descripcionInput = $('[name="Descripcion"]');
 
+            // Función para determinar el prefijo basado en el nombre
+            function obtenerPrefijo(nombre) {
+                const nombreLower = nombre.toLowerCase();
+                if (nombreLower.includes('certificacion') || nombreLower.includes('certificación')) {
+                    return 'CERT-';
+                }
+                return 'OFI-';
+            }
+
+            // Función para generar iniciales automáticamente
+            function generarIniciales(nombre) {
+                const palabras = nombre.trim().split(/\s+/);
+                return palabras.map(p => p.charAt(0).toUpperCase()).join("");
+            }
 
             nombreInput.on("input", function () {
-            const palabras = $(this).val().trim().split(/\s+/);
-            const generadas = palabras.map(p => p.charAt(0).toUpperCase()).join("");
+                const nombreActual = $(this).val().trim();
 
-            const manual = inicialesInput.val().trim().toUpperCase();
-            const combinadas = manual.length > 0 && !manual.startsWith(generadas)
-                ? generadas + manual
-                : generadas;
+                if (nombreActual) {
+                    const generadas = generarIniciales(nombreActual);
+                    const prefijo = obtenerPrefijo(nombreActual);
 
-            inicialesInput.val(combinadas);
-        });
+                    // Obtener el valor actual de iniciales (sin el prefijo actual)
+                    const valorActual = inicialesInput.val().toUpperCase();
+                    const prefijoActual = valorActual.startsWith('OFI-') ? 'OFI-' :
+                                         valorActual.startsWith('CERT-') ? 'CERT-' : '';
+                    const contenidoUsuario = prefijoActual ? valorActual.substring(prefijoActual.length) : valorActual;
 
-        inicialesInput.on("input", function () {
-            $(this).val($(this).val().toUpperCase());
-        });
+                    // Combinar: prefijo correcto + iniciales generadas + contenido adicional del usuario
+                    const combinadas = prefijo + generadas + contenidoUsuario.replace(generadas, '');
+                    inicialesInput.val(combinadas);
+                } else {
+                    // Si no hay nombre, usar prefijo por defecto (OFI-)
+                    const valorActual = inicialesInput.val().toUpperCase();
+                    if (!valorActual.startsWith("OFI-") && !valorActual.startsWith("CERT-")) {
+                        inicialesInput.val("OFI-" + valorActual);
+                    }
+                }
+            });
 
+            inicialesInput.on("input", function () {
+                let valorActual = $(this).val().toUpperCase();
+                const nombreActual = nombreInput.val().trim();
+                const prefijo = nombreActual ? obtenerPrefijo(nombreActual) : 'OFI-';
+
+                // Asegurar que siempre empiece con el prefijo correcto
+                if (!valorActual.startsWith(prefijo)) {
+                    // Si no tiene el prefijo correcto, remover cualquier prefijo existente y agregar el correcto
+                    const sinPrefijo = valorActual.replace(/^(OFI-|CERT-)/, '');
+                    valorActual = prefijo + sinPrefijo;
+                    $(this).val(valorActual);
+                }
+
+                // Mantener todo en mayúsculas
+                $(this).val(valorActual);
+            });
+
+            // Inicializar el campo de iniciales con el prefijo correcto si es necesario
+            if (inicialesInput.val().trim()) {
+                let valorActual = inicialesInput.val().toUpperCase();
+                const nombreActual = nombreInput.val().trim();
+                const prefijo = nombreActual ? obtenerPrefijo(nombreActual) : 'OFI-';
+
+                if (!valorActual.startsWith(prefijo)) {
+                    const sinPrefijo = valorActual.replace(/^(OFI-|CERT-)/, '');
+                    inicialesInput.val(prefijo + sinPrefijo);
+                } else {
+                    inicialesInput.val(valorActual);
+                }
+            }
 
             if (descripcionInput.length) {
                 const contador = $('#contadorDescripcion');
@@ -180,18 +232,32 @@
                 else if (actual >= umbral) contador.addClass("text-warning");
             }
 
-
             $('#editForm').on('submit', function (e) {
                 e.preventDefault();
 
                 const nombreActual = nombreInput.val()?.trim();
                 const inicialesActuales = inicialesInput.val()?.trim();
 
-
+                // Validación corregida - más simple y efectiva
                 if (!nombreActual || !inicialesActuales) {
                     Swal.fire({
                         title: '<span>Campos requeridos (<span style="color:#dc3545">*</span>)</span>',
                         text: "Por favor complete todos los campos obligatorios.",
+                        icon: "warning",
+                        confirmButtonText: "Entendido",
+                        confirmButtonColor: "#3D6FAD"
+                    });
+                    return false;
+                }
+
+                // Validar que las iniciales tengan contenido después del prefijo
+                const tienePrefijo = inicialesActuales.startsWith('OFI-') || inicialesActuales.startsWith('CERT-');
+                const contenidoDespuesPrefijo = inicialesActuales.substring(inicialesActuales.indexOf('-') + 1);
+
+                if (!tienePrefijo || !contenidoDespuesPrefijo) {
+                    Swal.fire({
+                        title: "Formato incorrecto",
+                        text: "Las iniciales deben comenzar con OFI- o CERT- y tener contenido después del guión.",
                         icon: "warning",
                         confirmButtonText: "Entendido",
                         confirmButtonColor: "#3D6FAD"

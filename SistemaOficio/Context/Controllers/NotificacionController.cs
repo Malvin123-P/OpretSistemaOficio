@@ -13,7 +13,7 @@ namespace OfiGest.Context.Controllers
             _notificacionManager = notificacionManager;
         }
 
-        //  Cantidad de notificaciones no leídas
+     
         [HttpGet]
         public async Task<JsonResult> ObtenerCantidad()
         {
@@ -25,7 +25,7 @@ namespace OfiGest.Context.Controllers
             return Json(new { cantidad });
         }
 
-        //  Lista de notificaciones no leídas
+     
         [HttpGet]
         public async Task<JsonResult> ObtenerLista()
         {
@@ -62,7 +62,7 @@ namespace OfiGest.Context.Controllers
         }
 
 
-        //  Helper institucional para obtener ID del usuario autenticado
+     
         private int? ObtenerUsuarioId()
         {
             var claimId = User.FindFirst("Id")?.Value;

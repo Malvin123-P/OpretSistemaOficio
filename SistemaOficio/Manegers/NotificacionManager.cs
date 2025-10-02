@@ -27,7 +27,7 @@ public class NotificacionManager
             return new List<Notificaciones>();
         }
     }
-    //  Marcar como leída
+
     public async Task<bool> MarcarComoLeidaAsync(int notificacionId, int usuarioId)
     {
         try
@@ -48,7 +48,6 @@ public class NotificacionManager
         }
     }
 
-    //  Obtener cantidad de pendientes
     public async Task<int> ObtenerCantidadNotificacionesPendientesAsync(int usuarioId)
     {
         try
@@ -63,7 +62,7 @@ public class NotificacionManager
         }
     }
 
-    //  Crear notificaciones para encargados
+  
     public async Task CrearNotificacionParaEncargadosAsync(int oficioId, string tipoOficio, string departamentoRemitente)
     {
         var oficio = await _context.Oficios.FindAsync(oficioId);

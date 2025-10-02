@@ -10,7 +10,7 @@ namespace OfiGest.Models
         public string? Anexos { get; set; }
         public string? DirigidoDepartamento { get; set; }
         public string? DepartamentoRemitente { get; set; }
-        public string? UsuarioNombre { get; set; } // Usuario que registró
+        public string? UsuarioNombre { get; set; } 
         public string? EncargadoDepartamental { get; set; }
         public DateTime FechaCreacion { get; set; }
     }

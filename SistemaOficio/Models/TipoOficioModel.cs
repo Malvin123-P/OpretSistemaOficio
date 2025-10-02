@@ -13,10 +13,9 @@ namespace OfiGest.Models
         [RegularExpression(@"^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s\-]+$", ErrorMessage = "El nombre solo puede contener letras, números, espacios y guiones.")]
         public string Nombre { get; set; }
 
-        [Display(Name = "Iniciales")]
-        [Required(ErrorMessage = "Las iniciales son obligatorias.")]
-        [StringLength(10, ErrorMessage = "Las iniciales no pueden exceder los 10 caracteres.")]
-        [RegularExpression(@"^[A-Z0-9]+$", ErrorMessage = "Las iniciales deben estar en mayúsculas y sin espacios.")]
+        [Required(ErrorMessage = "Las iniciales son requeridas")]
+        [StringLength(20, ErrorMessage = "Las iniciales no pueden exceder 20 caracteres")]
+        [RegularExpression(@"^(OFI-|CERT-)[A-Z]+", ErrorMessage = "Las iniciales deben comenzar con OFI- o CERT- seguido de letras mayúsculas")]
         public string Iniciales { get; set; }
 
         [Display(Name = "Descripción")]

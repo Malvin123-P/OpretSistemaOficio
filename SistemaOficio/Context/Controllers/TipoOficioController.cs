@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using OfiGest.Manegers;
 using OfiGest.Models;
+using System.Text.RegularExpressions;
 
 namespace OfiGest.Context.Controllers
 {
@@ -32,6 +33,16 @@ namespace OfiGest.Context.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(TipoOficioModel model)
         {
+            // Validar formato del nombre
+            if (!string.IsNullOrEmpty(model.Nombre) && !EsNombreValido(model.Nombre))
+            {
+                TempData["Validacion"] = "El nombre solo puede contener letras, números, espacios y guiones.";
+                return View(model);
+
+            }
+
+            ModelState.Remove(nameof(model.Iniciales));
+
             if (!ModelState.IsValid)
                 return View(model);
 
@@ -57,7 +68,6 @@ namespace OfiGest.Context.Controllers
                 return View(model);
             }
 
-
             var creado = await _manenger.CrearAsync(model, ModelState);
 
             if (!ModelState.IsValid)
@@ -72,6 +82,7 @@ namespace OfiGest.Context.Controllers
             TempData["Success"] = "Tipo de oficio creado correctamente.";
             return RedirectToAction("Index");
         }
+
         [Authorize(Policy = "Administrador")]
         [HttpGet]
         public async Task<IActionResult> Edit(int id)
@@ -90,9 +101,14 @@ namespace OfiGest.Context.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(TipoOficioModel model)
         {
-            var original = await _manenger.ObtenerPorIdAsync(model.Id);
+          
+            if (!string.IsNullOrEmpty(model.Nombre) && !EsNombreValido(model.Nombre))
+            {
+                TempData["Validacion"] = "El nombre solo puede contener letras, números, espacios y guiones.";
+                return View(model);
+            }
 
-            
+            var original = await _manenger.ObtenerPorIdAsync(model.Id);
 
             if (original == null)
             {
@@ -118,6 +134,8 @@ namespace OfiGest.Context.Controllers
                 TempData["Validacion"] = "Ya existe un tipo de oficio con el mismo nombre e iniciales .";
                 return View(model);
             }
+
+            ModelState.Remove(nameof(model.Iniciales));
 
             if (!ModelState.IsValid)
             {
@@ -166,6 +184,11 @@ namespace OfiGest.Context.Controllers
             return RedirectToAction("Index");
         }
 
-      
+        private bool EsNombreValido(string nombre)
+        {
+   
+            var regex = new Regex(@"^[\p{L}\p{N}\s\-]+$");
+            return regex.IsMatch(nombre);
+        }
     }
 }
