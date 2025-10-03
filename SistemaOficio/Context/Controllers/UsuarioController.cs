@@ -248,7 +248,6 @@ namespace OfiGest.Controllers
             }
         }
 
-
         public async Task<IActionResult> Delete(int id)
         {
             if (id <= 0)
@@ -257,7 +256,7 @@ namespace OfiGest.Controllers
                 return RedirectToAction("Index");
             }
 
-            var (eliminado, tieneOficios, tieneLogs) = await _usuarioManager.EliminarAsync(id);
+            var (eliminado, tieneOficios, tieneLogs, tieneNotificaciones) = await _usuarioManager.EliminarAsync(id);
 
             if (tieneOficios)
             {
@@ -266,6 +265,10 @@ namespace OfiGest.Controllers
             else if (tieneLogs)
             {
                 TempData["Error"] = "No se puede eliminar el usuario. Está registrado en el historial de acciones.";
+            }
+            else if (tieneNotificaciones)
+            {
+                TempData["Error"] = "No se puede eliminar el usuario. Está asociado a notificaciones en el sistema.";
             }
             else
             {
@@ -276,7 +279,6 @@ namespace OfiGest.Controllers
 
             return RedirectToAction("Index");
         }
-
         [HttpGet]
         public async Task<JsonResult> ObtenerDivisionesPorDepartamento(int departamentoId)
         {

@@ -188,28 +188,37 @@ namespace OfiGest.Managers
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<(bool eliminado, bool tieneOficios, bool tieneLogs)> EliminarAsync(int id)
+        public async Task<(bool eliminado, bool tieneOficios, bool tieneLogs, bool tieneNotificaciones)> EliminarAsync(int id)
         {
             var usuario = await _context.Usuarios.FindAsync(id);
             if (usuario == null)
-                return (false, false, false);
+                return (false, false, false, false);
 
+            // Verificar si tiene oficios asociados
             bool tieneOficios = await _context.Oficios.AnyAsync(o => o.UsuarioId == id);
             if (tieneOficios)
-                return (false, true, false);
+                return (false, true, false, false);
 
+            // Verificar si tiene logs asociados
             bool tieneLogs = await _context.LogOficios.AnyAsync(l => l.UsuarioAccionId == id);
             if (tieneLogs)
-                return (false, false, true);
+                return (false, false, true, false);
 
+            // Verificar si tiene notificaciones asociadas
+            bool tieneNotificaciones = await _context.Notificaciones.AnyAsync(n => n.UsuarioId == id);
+            if (tieneNotificaciones)
+                return (false, false, false, true);
+
+            // Eliminar imagen de perfil si existe
             if (!string.IsNullOrEmpty(usuario.ImagenPerfil))
             {
                 EliminarImagenAnterior(usuario.ImagenPerfil);
             }
 
+            // Eliminar el usuario
             _context.Usuarios.Remove(usuario);
             var guardado = await _context.SaveChangesAsync() > 0;
-            return (guardado, false, false);
+            return (guardado, false, false, false);
         }
 
         public async Task<List<Departamento>> ObtenerDepartamentosAsync()
