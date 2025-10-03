@@ -8,23 +8,19 @@ namespace OfiGest.Manegers
     public class CorreoManager
     {
         private readonly ApplicationDbContext _context;
-   
 
         public CorreoManager(ApplicationDbContext context)
         {
             _context = context;
-           
         }
 
         private bool EnviarCorreo(string destinatario, string asunto, string cuerpoHtml)
         {
- 
             var usuarioDb = _context.Usuarios.FirstOrDefault(u => u.Correo == destinatario);
             if (usuarioDb == null) return false;
 
             try
             {
-
                 var remitente = Environment.GetEnvironmentVariable("Correo_Remitente");
                 var smtpUsuario = Environment.GetEnvironmentVariable("Correo_Usuario");
                 var clave = Environment.GetEnvironmentVariable("Correo_clave");
@@ -55,6 +51,7 @@ namespace OfiGest.Manegers
                 return false;
             }
         }
+
         public bool UsuarioExiste(string correo)
         {
             return _context.Usuarios.Any(u => u.Correo == correo);
@@ -76,7 +73,6 @@ namespace OfiGest.Manegers
 
             if (usuario == null) return false;
 
-          
             return string.Equals(usuario.Token?.Trim(), tokenRecibido, StringComparison.Ordinal) &&
                    usuario.TokenExpira >= DateTime.UtcNow;
         }
@@ -98,21 +94,25 @@ namespace OfiGest.Manegers
             if (string.IsNullOrWhiteSpace(baseUrl))
                 return false;
 
+            // Verificar si ya existe un token vigente
             var tokenVigente = usuario.RequiereRestablecer == true &&
                              usuario.TokenExpira != null &&
                              usuario.TokenExpira >= DateTime.UtcNow;
 
             if (tokenVigente)
+            {
+             
                 return false;
+            }
 
             var token = TokenGenerate.GenerarToken();
-            var minutosExpiracion = int.Parse(Environment.GetEnvironmentVariable("CorreoRestablecer_ExpiracionMinutos"));
+            var minutosExpiracion = int.Parse(Environment.GetEnvironmentVariable("CorreoRestablecer_ExpiracionMinutos") ?? "30");
 
             usuario.Token = token;
             usuario.TokenExpira = DateTime.UtcNow.AddMinutes(minutosExpiracion);
             usuario.RequiereRestablecer = true;
             _context.SaveChanges();
-         
+
             var tokenCodificado = WebUtility.UrlEncode(token);
             var enlace = $"{baseUrl}/Cuenta/Restablecer?correo={WebUtility.UrlEncode(correo)}&token={tokenCodificado}";
 
@@ -120,7 +120,7 @@ namespace OfiGest.Manegers
             if (!File.Exists(rutaPlantilla)) return false;
 
             var plantillaHtml = File.ReadAllText(rutaPlantilla);
-            var nombreCompleto = $"{usuario.Nombre} {usuario.Apellido}";
+            var nombreCompleto = $"{usuario.Nombre} {usuario.Apellido}".Trim();
 
             var cuerpoHtml = ReemplazarVariables(plantillaHtml, new Dictionary<string, string>
             {
@@ -130,8 +130,6 @@ namespace OfiGest.Manegers
                 ["Enlace"] = enlace,
                 ["MinutosExpiración"] = minutosExpiracion.ToString(),
                 ["AñoActual"] = DateTime.Now.Year.ToString()
-              
-
             });
 
             return EnviarCorreo(correo, "Restablecimiento de contraseña - OfiGest", cuerpoHtml);
@@ -146,15 +144,19 @@ namespace OfiGest.Manegers
             if (string.IsNullOrWhiteSpace(baseUrl))
                 return false;
 
+            // Verificar si ya existe un token vigente
             var tokenVigente = usuario.RequiereRestablecer == true &&
                              usuario.TokenExpira != null &&
                              usuario.TokenExpira >= DateTime.UtcNow;
 
             if (tokenVigente)
+            {
+               
                 return false;
+            }
 
             var token = TokenGenerate.GenerarToken();
-            var minutosExpiracion = int.Parse(Environment.GetEnvironmentVariable("CorreoActivacion_ExpiracionMinutos"));
+            var minutosExpiracion = int.Parse(Environment.GetEnvironmentVariable("CorreoActivacion_ExpiracionMinutos") ?? "60");
 
             usuario.Token = token;
             usuario.TokenExpira = DateTime.UtcNow.AddMinutes(minutosExpiracion);
@@ -168,7 +170,7 @@ namespace OfiGest.Manegers
             if (!File.Exists(rutaPlantilla)) return false;
 
             var plantillaHtml = File.ReadAllText(rutaPlantilla);
-            var nombreCompleto = $"{usuario.Nombre} {usuario.Apellido}";
+            var nombreCompleto = $"{usuario.Nombre} {usuario.Apellido}".Trim();
 
             var cuerpoHtml = ReemplazarVariables(plantillaHtml, new Dictionary<string, string>
             {
@@ -178,7 +180,6 @@ namespace OfiGest.Manegers
                 ["Enlace"] = enlace,
                 ["MinutosExpiración"] = minutosExpiracion.ToString(),
                 ["AñoActual"] = DateTime.Now.Year.ToString()
-
             });
 
             return EnviarCorreo(correo, "Activación de cuenta - OfiGest", cuerpoHtml);
