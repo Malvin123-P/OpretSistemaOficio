@@ -61,7 +61,7 @@
                     <span class="text-danger" title="Campo obligatorio">*</span>
                     <input asp-for="Nombre" class="form-control" maxlength="100" placeholder="Oficio de solicitud" id="nombreInput" />
                     <span asp-validation-for="Nombre" class="text-danger d-none"></span>
-                    <span asp-validation-for="Nombre" class="text-danger"></span>
+              
                 </div>
             
                 <div class="col-md-6 mb-3">
@@ -121,6 +121,11 @@
             const descripcionInput = $('[name="Descripcion"]');
             const contador = $('#contadorDescripcion');
 
+            // Función para eliminar espacios extras
+            function limpiarEspacios(texto) {
+                return texto.replace(/\s+/g, ' ').trim(); // Reemplaza múltiples espacios por uno solo y elimina espacios al inicio/final
+            }
+
             // Función para determinar el prefijo basado en el nombre
             function obtenerPrefijo(nombre) {
                 const nombreLower = nombre.toLowerCase();
@@ -130,8 +135,17 @@
                 return 'OFI-';
             }
 
+            // Limpiar espacios en el input de Nombre
             nombreInput.on("input", function () {
-                const nombreActual = $(this).val().trim();
+                let valor = $(this).val();
+                let valorLimpio = limpiarEspacios(valor);
+
+                // Solo actualizar si hay cambios para evitar problemas con el cursor
+                if (valor !== valorLimpio) {
+                    $(this).val(valorLimpio);
+                }
+
+                const nombreActual = valorLimpio;
 
                 if (nombreActual) {
                     const palabras = nombreActual.split(/\s+/);
@@ -141,7 +155,7 @@
                     // Obtener el valor actual de iniciales (sin el prefijo actual)
                     const valorActual = inicialesInput.val().toUpperCase();
                     const prefijoActual = valorActual.startsWith('OFI-') ? 'OFI-' :
-                                         valorActual.startsWith('CERT-') ? 'CERT-' : '';
+                                        valorActual.startsWith('CERT-') ? 'CERT-' : '';
                     const contenidoUsuario = prefijoActual ? valorActual.substring(prefijoActual.length) : valorActual;
 
                     // Combinar: prefijo correcto + iniciales generadas + contenido adicional del usuario
@@ -156,21 +170,61 @@
                 }
             });
 
+            // Limpiar espacios en el input de Iniciales
             inicialesInput.on("input", function () {
-                let valorActual = $(this).val().toUpperCase();
+                let valor = $(this).val();
+                // Para iniciales, eliminar todos los espacios
+                let valorLimpio = valor.replace(/\s+/g, '').toUpperCase();
+
                 const nombreActual = nombreInput.val().trim();
                 const prefijo = nombreActual ? obtenerPrefijo(nombreActual) : 'OFI-';
 
                 // Asegurar que siempre empiece con el prefijo correcto
-                if (!valorActual.startsWith(prefijo)) {
+                if (!valorLimpio.startsWith(prefijo)) {
                     // Si no tiene el prefijo correcto, remover cualquier prefijo existente y agregar el correcto
-                    const sinPrefijo = valorActual.replace(/^(OFI-|CERT-)/, '');
-                    valorActual = prefijo + sinPrefijo;
-                    $(this).val(valorActual);
+                    const sinPrefijo = valorLimpio.replace(/^(OFI-|CERT-)/, '');
+                    valorLimpio = prefijo + sinPrefijo;
                 }
 
-                // Mantener todo en mayúsculas
-                $(this).val(valorActual);
+                if (valor !== valorLimpio) {
+                    $(this).val(valorLimpio);
+                }
+            });
+
+            // También limpiar espacios cuando el usuario pierde el foco (evento blur)
+            nombreInput.on("blur", function () {
+                $(this).val(limpiarEspacios($(this).val()));
+            });
+
+            inicialesInput.on("blur", function () {
+                let valor = $(this).val();
+                let valorLimpio = valor.replace(/\s+/g, '').toUpperCase();
+
+                const nombreActual = nombreInput.val().trim();
+                const prefijo = nombreActual ? obtenerPrefijo(nombreActual) : 'OFI-';
+
+                if (!valorLimpio.startsWith(prefijo)) {
+                    const sinPrefijo = valorLimpio.replace(/^(OFI-|CERT-)/, '');
+                    valorLimpio = prefijo + sinPrefijo;
+                }
+
+                $(this).val(valorLimpio);
+            });
+
+            // Limpiar espacios en el textarea de Descripción
+            descripcionInput.on("input", function () {
+                let valor = $(this).val();
+                // Para descripción, solo limpiamos espacios extras pero mantenemos saltos de línea
+                let valorLimpio = valor.replace(/[ ]+/g, ' '); // Solo espacios múltiples, no afecta saltos de línea
+
+                if (valor !== valorLimpio) {
+                    $(this).val(valorLimpio);
+                }
+            });
+
+            descripcionInput.on("blur", function () {
+                let valor = $(this).val();
+                $(this).val(valor.replace(/[ ]+/g, ' ').trim());
             });
 
             // Inicializar el campo de iniciales con prefijo por defecto si está vacío
@@ -231,11 +285,26 @@
             $('#createForm').on('submit', function (e) {
                 e.preventDefault();
 
-                const nombreActual = nombreInput.val()?.trim();
-                const inicialesActuales = inicialesInput.val()?.trim();
+                // Limpiar espacios finales antes de enviar
+                nombreInput.val(limpiarEspacios(nombreInput.val()));
+
+                let inicialesLimpio = inicialesInput.val().replace(/\s+/g, '').toUpperCase();
+                const nombreActual = nombreInput.val().trim();
+                const prefijo = nombreActual ? obtenerPrefijo(nombreActual) : 'OFI-';
+
+                if (!inicialesLimpio.startsWith(prefijo)) {
+                    const sinPrefijo = inicialesLimpio.replace(/^(OFI-|CERT-)/, '');
+                    inicialesLimpio = prefijo + sinPrefijo;
+                }
+                inicialesInput.val(inicialesLimpio);
+
+                descripcionInput.val(limpiarEspacios(descripcionInput.val()));
+
+                const nombreActualizado = nombreInput.val();
+                const inicialesActualizadas = inicialesInput.val();
 
                 // Validación corregida - más simple y efectiva
-                if (!nombreActual || !inicialesActuales) {
+                if (!nombreActualizado || !inicialesActualizadas) {
                     Swal.fire({
                         title: '<span>Campos requeridos (<span style="color:#dc3545">*</span>)</span>',
                         text: "Por favor complete todos los campos obligatorios.",
@@ -247,8 +316,8 @@
                 }
 
                 // Validar que las iniciales tengan contenido después del prefijo
-                const tienePrefijo = inicialesActuales.startsWith('OFI-') || inicialesActuales.startsWith('CERT-');
-                const contenidoDespuesPrefijo = inicialesActuales.substring(inicialesActuales.indexOf('-') + 1);
+                const tienePrefijo = inicialesActualizadas.startsWith('OFI-') || inicialesActualizadas.startsWith('CERT-');
+                const contenidoDespuesPrefijo = inicialesActualizadas.substring(inicialesActualizadas.indexOf('-') + 1);
 
                 if (!tienePrefijo || !contenidoDespuesPrefijo) {
                     Swal.fire({

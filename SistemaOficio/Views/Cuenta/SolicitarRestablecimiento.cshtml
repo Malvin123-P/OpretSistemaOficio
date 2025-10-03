@@ -1,5 +1,4 @@
-﻿
-@model SolicitudRestablecimientoViewModel
+﻿@model SolicitudRestablecimientoViewModel
 @{
     Layout = null;
     ViewData["Title"] = "Recuperar contraseña";
@@ -214,7 +213,7 @@
                     <button type="submit" class="btn btn-login d-flex justify-content-center align-items-center gap-2 mt-3">
                         <span>Enviar enlace de recuperación</span>
                         <div class="progress-container">
-                             <div class="progress-bar custom-progress"></div>
+                            <div class="progress-bar custom-progress"></div>
                         </div>
                     </button>
 
@@ -236,7 +235,33 @@
             const mensajeExito = document.querySelector('.alert-success');
             const mensajeError = document.querySelector('.alert-danger');
 
+            // Función para eliminar espacios extras
+            function limpiarEspacios(texto) {
+                return texto.replace(/\s+/g, '').trim(); // Elimina todos los espacios
+            }
+
+            // Limpiar espacios en el input de Correo
+            if (correoInput) {
+                correoInput.addEventListener('input', function () {
+                    let valor = this.value;
+                    let valorLimpio = limpiarEspacios(valor);
+
+                    if (valor !== valorLimpio) {
+                        this.value = valorLimpio;
+                    }
+                });
+
+                correoInput.addEventListener('blur', function () {
+                    this.value = limpiarEspacios(this.value);
+                });
+            }
+
             form?.addEventListener('submit', function (e) {
+                // Limpiar espacios finales antes de enviar
+                if (correoInput) {
+                    correoInput.value = limpiarEspacios(correoInput.value);
+                }
+
                 btnLogin.disabled = true;
                 btnLogin.querySelector('span').textContent = 'Enviando enlace...';
                 simularProgreso();
@@ -265,5 +290,3 @@
     </script>
 </body>
 </html>
-
-  

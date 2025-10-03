@@ -52,6 +52,7 @@ namespace OfiGest.Managers
                 Via = modelo.Via?.Trim(),
                 Anexos = modelo.Anexos?.Trim(),
                 DirigidoDepartamento = modelo.DirigidoDepartamento?.Trim() ?? string.Empty
+                
             };
 
             _context.Oficios.Add(oficio);

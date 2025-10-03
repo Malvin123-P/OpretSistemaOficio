@@ -68,8 +68,6 @@
                     <span class="text-danger" title="Campo obligatorio">*</span>
                     <input asp-for="Nombre" class="form-control" maxlength="100" placeholder="Mario" id="nombreInput />
                     <span asp-validation-for="Nombre" class="text-danger d-none"></span>
-
-
                 </div>
 
                 <div class="col-md-6 mb-3">
@@ -187,10 +185,62 @@
                 });
             }
 
+            // Referencias a los inputs de texto
+            const nombreInput = $('[name="Nombre"]');
+            const apellidoInput = $('[name="Apellido"]');
+            const correoInput = $('[name="Correo"]');
             const divisionSelect = $('#DivisionId');
             const departamentoSelect = $('#DepartamentoId');
             const encargadoCheckbox = $('#flexSwitchCheckDefault');
             const indicadorDivision = $('.indicador-division');
+
+            // Función para eliminar espacios extras
+            function limpiarEspacios(texto) {
+                return texto.replace(/\s+/g, ' ').trim(); // Reemplaza múltiples espacios por uno solo y elimina espacios al inicio/final
+            }
+
+            // Limpiar espacios en el input de Nombre
+            nombreInput.on("input", function () {
+                let valor = $(this).val();
+                let valorLimpio = limpiarEspacios(valor);
+
+                if (valor !== valorLimpio) {
+                    $(this).val(valorLimpio);
+                }
+            });
+
+            nombreInput.on("blur", function () {
+                $(this).val(limpiarEspacios($(this).val()));
+            });
+
+            // Limpiar espacios en el input de Apellido
+            apellidoInput.on("input", function () {
+                let valor = $(this).val();
+                let valorLimpio = limpiarEspacios(valor);
+
+                if (valor !== valorLimpio) {
+                    $(this).val(valorLimpio);
+                }
+            });
+
+            apellidoInput.on("blur", function () {
+                $(this).val(limpiarEspacios($(this).val()));
+            });
+
+            // Limpiar espacios en el input de Correo
+            correoInput.on("input", function () {
+                let valor = $(this).val();
+                // Para correo, eliminar todos los espacios
+                let valorLimpio = valor.replace(/\s+/g, '').trim();
+
+                if (valor !== valorLimpio) {
+                    $(this).val(valorLimpio);
+                }
+            });
+
+            correoInput.on("blur", function () {
+                $(this).val($(this).val().replace(/\s+/g, '').trim());
+            });
 
             function cargarDivisiones(departamentoId) {
                 divisionSelect.empty().append('<option value="">Cargando...</option>').selectpicker('refresh');
@@ -244,56 +294,62 @@
 
             actualizarEstadoDivision();
 
-                   $('#createForm').on('submit', function (e) {
-            e.preventDefault();
-            const esEncargado = encargadoCheckbox.is(':checked');
-            const camposObligatorios = ['Nombre', 'Apellido', 'Correo', 'Contraseña', 'DepartamentoId', 'RolId'];
-            let validacionFallida = false;
-            let primerCampoVacio = null;
+            $('#createForm').on('submit', function (e) {
+                e.preventDefault();
 
-            camposObligatorios.forEach(nombre => {
-                const campo = document.querySelector(`[name="${nombre}"]`);
-                if (campo && !campo.value.trim()) {
-                    validacionFallida = true;
-                    if (!primerCampoVacio) primerCampoVacio = campo;
-                }
-            });
+                // Limpiar espacios finales antes de enviar
+                nombreInput.val(limpiarEspacios(nombreInput.val()));
+                apellidoInput.val(limpiarEspacios(apellidoInput.val()));
+                correoInput.val(correoInput.val().replace(/\s+/g, '').trim());
 
-            const selectpickers = ['DepartamentoId', 'RolId'];
-            selectpickers.forEach(id => {
-                const select = $('#' + id);
-                if (!select.val()) {
-                    validacionFallida = true;
-                    if (!primerCampoVacio) primerCampoVacio = select[0];
-                }
-            });
+                const esEncargado = encargadoCheckbox.is(':checked');
+                const camposObligatorios = ['Nombre', 'Apellido', 'Correo', 'Contraseña', 'DepartamentoId', 'RolId'];
+                let validacionFallida = false;
+                let primerCampoVacio = null;
 
-            if (!esEncargado && (!divisionSelect.val() || divisionSelect.val() === '')) {
-                validacionFallida = true;
-                if (!primerCampoVacio) primerCampoVacio = divisionSelect[0];
-            }
-
-            if (validacionFallida) {
-                Swal.fire({
-                    title: '<span>Campos requeridos (<span style="color:#dc3545">*</span>)</span>',
-                    text: "Por favor, complete todos los campos obligatorios.",
-                    icon: "warning",
-                    confirmButtonText: "Entendido",
-                    confirmButtonColor: "#3D6FAD"
-                }).then(() => {
-                    setTimeout(() => {
-                        const isSelectPicker = $(primerCampoVacio).hasClass('selectpicker');
-                        if (isSelectPicker) {
-                            $(primerCampoVacio).selectpicker('toggle');
-                        } else {
-                            primerCampoVacio.focus();
-                        }
-                        primerCampoVacio.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }, 100);
+                camposObligatorios.forEach(nombre => {
+                    const campo = document.querySelector(`[name="${nombre}"]`);
+                    if (campo && !campo.value.trim()) {
+                        validacionFallida = true;
+                        if (!primerCampoVacio) primerCampoVacio = campo;
+                    }
                 });
 
-                return false;
-            }
+                const selectpickers = ['DepartamentoId', 'RolId'];
+                selectpickers.forEach(id => {
+                    const select = $('#' + id);
+                    if (!select.val()) {
+                        validacionFallida = true;
+                        if (!primerCampoVacio) primerCampoVacio = select[0];
+                    }
+                });
+
+                if (!esEncargado && (!divisionSelect.val() || divisionSelect.val() === '')) {
+                    validacionFallida = true;
+                    if (!primerCampoVacio) primerCampoVacio = divisionSelect[0];
+                }
+
+                if (validacionFallida) {
+                    Swal.fire({
+                        title: '<span>Campos requeridos (<span style="color:#dc3545">*</span>)</span>',
+                        text: "Por favor, complete todos los campos obligatorios.",
+                        icon: "warning",
+                        confirmButtonText: "Entendido",
+                        confirmButtonColor: "#3D6FAD"
+                    }).then(() => {
+                        setTimeout(() => {
+                            const isSelectPicker = $(primerCampoVacio).hasClass('selectpicker');
+                            if (isSelectPicker) {
+                                $(primerCampoVacio).selectpicker('toggle');
+                            } else {
+                                primerCampoVacio.focus();
+                            }
+                            primerCampoVacio.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }, 100);
+                    });
+
+                    return false;
+                }
 
                 this.submit();
             });

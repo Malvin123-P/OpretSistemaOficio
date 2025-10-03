@@ -100,6 +100,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/css/bootstrap-select.min.css">
 
+
     <script>
         $(document).ready(function () {
             $('form').attr('novalidate', 'novalidate');
@@ -116,7 +117,7 @@
                     confirmButtonText: "Entendido",
                     confirmButtonColor: "#3D6FAD"
                 });
-            }else if (ValidacionMessage) {
+            } else if (ValidacionMessage) {
                 Swal.fire({
                     icon: "error",
                     title: "¡Atención!",
@@ -126,28 +127,72 @@
                 });
             }
 
-
             const nombreInput = $('[name="Nombre"]');
             const inicialesInput = $('[name="Iniciales"]');
             const descripcionInput = $('[name="Descripcion"]');
 
+            // Función para eliminar espacios extras
+            function limpiarEspacios(texto) {
+                return texto.replace(/\s+/g, ' ').trim(); // Reemplaza múltiples espacios por uno solo y elimina espacios al inicio/final
+            }
 
+            // Limpiar espacios en el input de Nombre
             nombreInput.on("input", function () {
-            const palabras = $(this).val().trim().split(/\s+/);
-            const generadas = palabras.map(p => p.charAt(0).toUpperCase()).join("");
+                let valor = $(this).val();
+                let valorLimpio = limpiarEspacios(valor);
 
-            const manual = inicialesInput.val().trim().toUpperCase();
-            const combinadas = manual.length > 0 && !manual.startsWith(generadas)
-                ? generadas + manual
-                : generadas;
+                // Solo actualizar si hay cambios para evitar problemas con el cursor
+                if (valor !== valorLimpio) {
+                    $(this).val(valorLimpio);
+                }
 
-            inicialesInput.val(combinadas);
-        });
+                // Generar iniciales automáticamente
+                const palabras = valorLimpio.split(/\s+/);
+                const generadas = palabras.map(p => p.charAt(0).toUpperCase()).join("");
 
-        inicialesInput.on("input", function () {
-            $(this).val($(this).val().toUpperCase());
-        });
+                const manual = inicialesInput.val().trim().toUpperCase();
+                const combinadas = manual.length > 0 && !manual.startsWith(generadas)
+                    ? generadas + manual
+                    : generadas;
 
+                inicialesInput.val(combinadas);
+            });
+
+            // Limpiar espacios en el input de Iniciales
+            inicialesInput.on("input", function () {
+                let valor = $(this).val();
+                // Para iniciales, eliminar todos los espacios
+                let valorLimpio = valor.replace(/\s+/g, '').toUpperCase();
+
+                if (valor !== valorLimpio) {
+                    $(this).val(valorLimpio);
+                }
+            });
+
+            // Limpiar espacios en el textarea de Descripción
+            descripcionInput.on("input", function () {
+                let valor = $(this).val();
+                // Para descripción, solo limpiamos espacios extras pero mantenemos saltos de línea
+                let valorLimpio = valor.replace(/[ ]+/g, ' '); // Solo espacios múltiples, no afecta saltos de línea
+
+                if (valor !== valorLimpio) {
+                    $(this).val(valorLimpio);
+                }
+            });
+
+            // También limpiar espacios cuando el usuario pierde el foco (evento blur)
+            nombreInput.on("blur", function () {
+                $(this).val(limpiarEspacios($(this).val()));
+            });
+
+            inicialesInput.on("blur", function () {
+                $(this).val($(this).val().replace(/\s+/g, '').toUpperCase());
+            });
+
+            descripcionInput.on("blur", function () {
+                let valor = $(this).val();
+                $(this).val(valor.replace(/[ ]+/g, ' ').trim());
+            });
 
             if (descripcionInput.length) {
                 const contador = $('#contadorDescripcion');
@@ -186,13 +231,16 @@
                 else if (actual >= umbral) contador.addClass("text-warning");
             }
 
-
             $('#editForm').on('submit', function (e) {
                 e.preventDefault();
 
-                const nombreActual = nombreInput.val()?.trim();
-                const inicialesActuales = inicialesInput.val()?.trim();
+                // Limpiar espacios finales antes de enviar
+                nombreInput.val(limpiarEspacios(nombreInput.val()));
+                inicialesInput.val(inicialesInput.val().replace(/\s+/g, '').toUpperCase());
+                descripcionInput.val(limpiarEspacios(descripcionInput.val()));
 
+                const nombreActual = nombreInput.val();
+                const inicialesActuales = inicialesInput.val();
 
                 if (!nombreActual || !inicialesActuales) {
                     Swal.fire({

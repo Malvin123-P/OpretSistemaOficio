@@ -313,6 +313,11 @@
         let contenidoOriginal = '';
         let enviandoFormulario = false;
 
+        // Función para eliminar espacios extras
+        function limpiarEspacios(texto) {
+            return texto.replace(/\s+/g, ' ').trim(); // Reemplaza múltiples espacios por uno solo y elimina espacios al inicio/final
+        }
+
         function verificarSoporteSpellcheck() {
             const testElement = document.createElement('div');
             testElement.setAttribute('spellcheck', 'true');
@@ -472,6 +477,39 @@
         }
 
         function configurarValidacionFormulario() {
+            // Referencias a los inputs de texto
+            const viaInput = $('[name="Via"]');
+            const anexosInput = $('[name="Anexos"]');
+
+            // Limpiar espacios en el input de Via
+            viaInput.on("input", function () {
+                let valor = $(this).val();
+                let valorLimpio = limpiarEspacios(valor);
+
+                if (valor !== valorLimpio) {
+                    $(this).val(valorLimpio);
+                }
+            });
+
+            viaInput.on("blur", function () {
+                $(this).val(limpiarEspacios($(this).val()));
+            });
+
+            // Limpiar espacios en el input de Anexos
+            anexosInput.on("input", function () {
+                let valor = $(this).val();
+                // Para URLs, eliminar todos los espacios
+                let valorLimpio = valor.replace(/\s+/g, '').trim();
+
+                if (valor !== valorLimpio) {
+                    $(this).val(valorLimpio);
+                }
+            });
+
+            anexosInput.on("blur", function () {
+                $(this).val($(this).val().replace(/\s+/g, '').trim());
+            });
+
             // Función para obtener contenido de Summernote
             const getSummernoteContent = () => {
                 const html = $('#summernote').summernote('code');
@@ -485,6 +523,10 @@
                 }
 
                 e.preventDefault();
+
+                // Limpiar espacios finales antes de enviar
+                viaInput.val(limpiarEspacios(viaInput.val()));
+                anexosInput.val(anexosInput.val().replace(/\s+/g, '').trim());
 
                 // Actualizar campo oculto con contenido actual
                 const contenidoActual = getSummernoteContent();
@@ -523,7 +565,7 @@
                 }
 
                 // Validar URL de anexos si se proporciona - SOLO SWAL, SIN ESTILOS EN EL INPUT
-                const anexosUrl = $('[name="Anexos"]').val().trim();
+                const anexosUrl = anexosInput.val().trim();
                 if (anexosUrl && !esUrlValida(anexosUrl)) {
                     Swal.fire({
                         title: 'URL inválida',
@@ -796,7 +838,6 @@
                     }
                 }, 50);
             });
-
 
             // Restaurar estado del botón si hay una recarga de página
             $(window).on('beforeunload', function() {

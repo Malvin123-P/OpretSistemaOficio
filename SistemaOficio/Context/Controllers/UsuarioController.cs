@@ -92,12 +92,13 @@ namespace OfiGest.Controllers
                 var extension = Path.GetExtension(model.ArchivoImagen.FileName).ToLower();
                 if (!extensionesPermitidas.Contains(extension))
                 {
-                    ModelState.AddModelError(nameof(model.ArchivoImagen), "Formato de archivo no permitido. Use JPG, JPEG, PNG o GIF.");
+                         TempData["Validacion"] ="Formato de archivo no permitido. Use JPG, JPEG, PNG o GIF.";
                 }
 
                 if (model.ArchivoImagen.Length > 2 * 1024 * 1024)
                 {
-                    ModelState.AddModelError(nameof(model.ArchivoImagen), "La imagen no puede ser mayor a 2MB.");
+                    TempData["Validacion"] = "La imagen no puede ser mayor a 2MB.";
+              
                 }
             }
 

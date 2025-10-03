@@ -265,6 +265,11 @@
         let componentesInicializados = false;
         let enviandoFormulario = false;
 
+        // Función para eliminar espacios extras
+        function limpiarEspacios(texto) {
+            return texto.replace(/\s+/g, ' ').trim(); // Reemplaza múltiples espacios por uno solo y elimina espacios al inicio/final
+        }
+
         function verificarSoporteSpellcheck() {
             const testElement = document.createElement('div');
             testElement.setAttribute('spellcheck', 'true');
@@ -417,12 +422,49 @@
         }
 
         function configurarValidacionFormulario() {
+            // Referencias a los inputs de texto
+            const viaInput = $('[name="Via"]');
+            const anexosInput = $('[name="Anexos"]');
+
+            // Limpiar espacios en el input de Via
+            viaInput.on("input", function () {
+                let valor = $(this).val();
+                let valorLimpio = limpiarEspacios(valor);
+
+                if (valor !== valorLimpio) {
+                    $(this).val(valorLimpio);
+                }
+            });
+
+            viaInput.on("blur", function () {
+                $(this).val(limpiarEspacios($(this).val()));
+            });
+
+            // Limpiar espacios en el input de Anexos
+            anexosInput.on("input", function () {
+                let valor = $(this).val();
+                // Para URLs, eliminar todos los espacios
+                let valorLimpio = valor.replace(/\s+/g, '').trim();
+
+                if (valor !== valorLimpio) {
+                    $(this).val(valorLimpio);
+                }
+            });
+
+            anexosInput.on("blur", function () {
+                $(this).val($(this).val().replace(/\s+/g, '').trim());
+            });
+
             $('#formCreate').on('submit', function (e) {
                 if (enviandoFormulario) {
                     return;
                 }
 
                 e.preventDefault();
+
+                // Limpiar espacios finales antes de enviar
+                viaInput.val(limpiarEspacios(viaInput.val()));
+                anexosInput.val(anexosInput.val().replace(/\s+/g, '').trim());
 
                 // Obtener contenido de Summernote
                 const contenidoHTML = $('#summernote').summernote('code');
@@ -461,7 +503,7 @@
                 }
 
                 // Validar URL de anexos si se proporciona - SOLO SWAL, SIN ESTILOS EN EL INPUT
-                const anexosUrl = $('[name="Anexos"]').val().trim();
+                const anexosUrl = anexosInput.val().trim();
                 if (anexosUrl && !esUrlValida(anexosUrl)) {
                     Swal.fire({
                         title: 'URL inválida',
@@ -624,9 +666,6 @@
                     label.css('font-weight', 'normal');
                 }
             });
-
-            // REMOVIDO: Validación en tiempo real para campos de texto
-            // Ya no se muestra el mensaje de error ni se pone rojo el input
 
             // Botón de ejemplo (opcional - puedes remover si no lo necesitas)
             $('#btn-ejemplo').on('click', function() {
