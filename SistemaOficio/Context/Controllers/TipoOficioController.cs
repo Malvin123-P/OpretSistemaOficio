@@ -60,7 +60,7 @@ namespace OfiGest.Context.Controllers
                 return View(model);
             }
 
-            var conflictoCompuesto = await _manenger.ExisteTipoOficioCompuestoAsync(model.Nombre, model.Iniciales);
+            var conflictoCompuesto = await _manenger.ExisteInicialesAsync(model.Iniciales,model.Id);
 
             if (conflictoCompuesto)
             {
@@ -127,7 +127,7 @@ namespace OfiGest.Context.Controllers
                 return RedirectToAction("Edit", new { id = model.Id });
             }
 
-            var conflictoCompuesto = await _manenger.ExisteTipoOficioCompuestoAsync(model.Nombre, model.Iniciales);
+            var conflictoCompuesto = await _manenger.ExisteInicialesAsync(model.Iniciales,model.Id);
 
             if (conflictoCompuesto)
             {

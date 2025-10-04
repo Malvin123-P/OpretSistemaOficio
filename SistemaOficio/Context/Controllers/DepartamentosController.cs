@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using OfiGest.Manegers;
 using OfiGest.Models;
+using System.Text.RegularExpressions;
 
 namespace OfiGest.Context.Controllers
 {
@@ -38,6 +39,12 @@ namespace OfiGest.Context.Controllers
             if (existente != null)
             {
                 TempData["Validacion"] = "Ya existe un departamento con ese nombre.";
+                return View(model);
+            }
+
+            if (!string.IsNullOrEmpty(model.Nombre) && !EsNombreValido(model.Nombre))
+            {
+                TempData["Validacion"] = "El nombre solo puede contener letras, números, espacios y guiones.";
                 return View(model);
             }
 
@@ -84,6 +91,12 @@ namespace OfiGest.Context.Controllers
             {
                 TempData["Error"] = "Departamento no encontrado.";
                 return RedirectToAction("Index");
+            }
+
+            if (!string.IsNullOrEmpty(model.Nombre) && !EsNombreValido(model.Nombre))
+            {
+                TempData["Validacion"] = "El nombre solo puede contener letras, números, espacios y guiones.";
+                return View(model);
             }
 
             var conflictoIniciales = await _manenger.ExisteInicialesAsync(model.Iniciales, model.Id);
@@ -169,6 +182,13 @@ namespace OfiGest.Context.Controllers
             }
 
             return RedirectToAction("Index");
+        }
+
+        private bool EsNombreValido(string nombre)
+        {
+
+            var regex = new Regex(@"^[\p{L}\p{N}\s\-]+$");
+            return regex.IsMatch(nombre);
         }
     }
 }

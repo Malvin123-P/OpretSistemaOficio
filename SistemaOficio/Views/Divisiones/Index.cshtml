@@ -6,6 +6,25 @@
 }
 
 <style>
+    /* Estilos para el hover de las filas de la tabla */
+    .table-wrapper tbody tr {
+        transition: background-color 0.2s ease;
+    }
+
+        .table-wrapper tbody tr:hover {
+            background-color: #f5f5f5 !important;
+            cursor: pointer;
+        }
+
+        /* Para mantener la apariencia de filas deshabilitadas incluso en hover */
+        .table-wrapper tbody tr.fila-deshabilitada:hover {
+            background-color: #f8d7da !important;
+        }
+
+        /* Para mantener la apariencia de filas que requieren restablecer incluso en hover */
+        .table-wrapper tbody tr.requiere-restablecer:hover {
+            background-color: #ffeaa7 !important;
+        }
     .btn-opret-sm {
         background-color: #3D6FAD;
         color: white;

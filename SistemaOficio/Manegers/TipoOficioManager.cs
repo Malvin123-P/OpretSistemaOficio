@@ -132,14 +132,6 @@ namespace OfiGest.Manegers
             };
         }
 
-
-        public async Task<bool> ExisteTipoOficioCompuestoAsync(string nombre, string iniciales)
-        {
-            return await _context.TiposOficio
-                .AnyAsync(t => t.Nombre.ToLower() == nombre.Trim().ToLower() &&
-                               t.Iniciales.ToLower() == iniciales.Trim().ToLower());
-        }
-
         public async Task<bool> ExisteInicialesAsync(string iniciales, int excluirId)
         {
             return await _context.Departamentos

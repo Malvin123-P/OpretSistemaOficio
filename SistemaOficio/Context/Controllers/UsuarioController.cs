@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using OfiGest.Entities;
 using OfiGest.Managers;
 using OfiGest.Models;
+using System.Text.RegularExpressions;
 
 namespace OfiGest.Controllers
 {
@@ -83,6 +84,18 @@ namespace OfiGest.Controllers
         {
             await CargarListasAsync(model.DepartamentoId, model.RolId, model.DivisionId, model.EsEncargadoDepartamental);
 
+            if (!string.IsNullOrEmpty(model.Nombre) && !EsNombreValido(model.Nombre))
+            {
+                TempData["Validacion"] = "El nombre solo puede contener letras, números, espacios y guiones.";
+                return View(model);
+            }
+
+            if (!string.IsNullOrEmpty(model.Apellido) && !EsNombreValido(model.Apellido))
+            {
+                TempData["Validacion"] = "El apellido solo puede contener letras, números, espacios y guiones.";
+                return View(model);
+            }
+
             if (model.EsEncargadoDepartamental)
                 ModelState.Remove(nameof(model.DivisionId));
 
@@ -154,6 +167,18 @@ namespace OfiGest.Controllers
 
             model.EsEdicion = true;
             await CargarListasAsync(model.DepartamentoId, model.RolId, model.DivisionId, model.EsEncargadoDepartamental);
+
+            if (!string.IsNullOrEmpty(model.Nombre) && !EsNombreValido(model.Nombre))
+            {
+                TempData["Validacion"] = "El nombre solo puede contener letras, números, espacios y guiones.";
+                return View(model);
+            }
+
+            if (!string.IsNullOrEmpty(model.Apellido) && !EsNombreValido(model.Apellido))
+            {
+                TempData["Validacion"] = "El apellido solo puede contener letras, números, espacios y guiones.";
+                return View(model);
+            }
 
             if (original == null)
             {
@@ -340,6 +365,13 @@ namespace OfiGest.Controllers
                 return StatusCode(500, "Error al descargar la imagen");
             }
         }
+
+        private bool EsNombreValido(string nombre)
+        {
+            var regex = new Regex(@"^[\p{L}\p{N}\s\-]+$");
+            return regex.IsMatch(nombre);
+        }
+
     }
 }
 

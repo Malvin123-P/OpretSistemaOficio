@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using OfiGest.Manegers;
 using OfiGest.Models;
+using System.Text.RegularExpressions;
 
 namespace OfiGest.Context.Controllers
 {
@@ -46,6 +47,11 @@ namespace OfiGest.Context.Controllers
                 return View(model);
             }
 
+            if (!string.IsNullOrEmpty(model.Nombre) && !EsNombreValido(model.Nombre))
+            {
+                TempData["Validacion"] = "El nombre solo puede contener letras, números, espacios y guiones.";
+                return View(model);
+            }
             var existente = await _divisionesManenger.ObtenerPorNombreYDepartamentosAsync(model.Nombre, model.DepartamentoId);
             if (existente != null)
             {
@@ -107,7 +113,11 @@ namespace OfiGest.Context.Controllers
                 TempData["Error"] = "División no encontrada.";
                 return RedirectToAction("Index");
             }
-
+            if (!string.IsNullOrEmpty(model.Nombre) && !EsNombreValido(model.Nombre))
+            {
+                TempData["Validacion"] = "El nombre solo puede contener letras, números, espacios y guiones.";
+                return View(model);
+            }
 
             var conflictoIniciales = await _divisionesManenger.ExisteInicialesEnDepartamentoAsync(model.Iniciales, model.DepartamentoId, model.Id);
             if (conflictoIniciales)
@@ -182,6 +192,13 @@ namespace OfiGest.Context.Controllers
             }
 
             return RedirectToAction("Index");
+        }
+
+        private bool EsNombreValido(string nombre)
+        {
+
+            var regex = new Regex(@"^[\p{L}\p{N}\s\-]+$");
+            return regex.IsMatch(nombre);
         }
     }
 }
