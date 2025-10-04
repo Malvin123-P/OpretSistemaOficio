@@ -485,254 +485,277 @@
     <script src="~/js/site.js" asp-append-version="true"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-        <script>
-            // Gestión de notificaciones 
-            const NotificacionesManager = {
-                async cargar() {
-                    try {
-                        this.mostrarCargando();
-                        await new Promise(resolve => setTimeout(resolve, 300));
+    <script>
+        // Gestión de notificaciones
+        const NotificacionesManager = {
+            async cargar() {
+                try {
+                    this.mostrarCargando();
+                    await new Promise(resolve => setTimeout(resolve, 300));
 
-                        const [dataCantidad, dataLista] = await Promise.all([
-                            this.obtenerCantidad(),
-                            this.obtenerLista()
-                        ]);
+                    const [dataCantidad, dataLista] = await Promise.all([
+                        this.obtenerCantidad(),
+                        this.obtenerLista()
+                    ]);
 
-                        this.actualizarBadge(dataCantidad.cantidad);
-                        this.actualizarLista(dataLista.notificaciones);
-                    } catch (error) {
-                        this.mostrarError();
+                    this.actualizarBadge(dataCantidad.cantidad);
+                    this.actualizarLista(dataLista.notificaciones);
+                } catch (error) {
+                    this.mostrarError();
+                }
+            },
+
+            async obtenerCantidad() {
+                const response = await fetch('/Notificacion/ObtenerCantidad');
+                if (!response.ok) throw new Error('Error en cantidad');
+                return await response.json();
+            },
+
+            async obtenerLista() {
+                const response = await fetch('/Notificacion/ObtenerLista');
+                if (!response.ok) throw new Error('Error en lista');
+                return await response.json();
+            },
+
+            mostrarCargando() {
+                const lista = document.getElementById('listaNotificacionesUsuario');
+                if (!lista) return;
+
+                lista.innerHTML = `
+                    <div class="loading-notificaciones text-center p-3">
+                        <div class="spinner-border spinner-border-sm text-primary" role="status">
+                            <span class="visually-hidden">Cargando...</span>
+                        </div>
+                        <div class="mt-2">Cargando notificaciones...</div>
+                    </div>
+                `;
+                lista.style.opacity = '1';
+            },
+
+            actualizarBadge(cantidad) {
+                const badge = document.getElementById('badgeNotificacionesUsuario');
+                if (!badge) return;
+
+                if (cantidad > 0) {
+                    badge.style.display = 'block';
+                    badge.textContent = cantidad > 99 ? '99+' : cantidad.toString();
+                } else {
+                    badge.style.display = 'none';
+                }
+            },
+
+            actualizarLista(notificaciones) {
+                const lista = document.getElementById('listaNotificacionesUsuario');
+                if (!lista) return;
+
+                lista.style.opacity = '0';
+
+                setTimeout(() => {
+                    if (!notificaciones || notificaciones.length === 0) {
+                        lista.innerHTML = this.plantillaSinNotificaciones();
+                    } else {
+                        lista.innerHTML = notificaciones.map(notif => this.plantillaNotificacion(notif)).join('');
                     }
-                },
+                    lista.style.opacity = '1';
+                }, 150);
+            },
 
-                async obtenerCantidad() {
-                    const response = await fetch('/Notificacion/ObtenerCantidad');
-                    if (!response.ok) throw new Error('Error en cantidad');
-                    return await response.json();
-                },
+            plantillaSinNotificaciones() {
+                return `
+                    <div class="sin-notificaciones-usuario">
+                        <i class="bi bi-bell-slash" style="font-size: 3rem; opacity: 0.5;"></i>
+                        <div class="mt-3" style="font-size: 0.9rem;">
+                            <div class="fw-bold">No tienes oficios pendientes</div>
+                            <div class="text-muted">Cuando recibas nuevos oficios, aparecerán aquí</div>
+                        </div>
+                    </div>
+                `;
+            },
 
-                async obtenerLista() {
-                    const response = await fetch('/Notificacion/ObtenerLista');
-                    if (!response.ok) throw new Error('Error en lista');
-                    return await response.json();
-                },
+            plantillaNotificacion(notif) {
+                // Formatear la fecha a formato 12 horas
+                const fechaFormateada = this.formatearFecha12Horas(notif.fecha);
 
-                mostrarCargando() {
-                    const lista = document.getElementById('listaNotificacionesUsuario');
-                    if (!lista) return;
+                return `
+                    <div class="notificacion-item-usuario" data-id="${notif.id}">
+                        <div class="notificacion-tipo-usuario">
+                            <i class="bi bi-file-earmark-text me-1"></i>${this.escapeHtml(notif.tipoOficio || 'Oficio General')}
+                        </div>
+                        <div class="notificacion-departamento-usuario">
+                            <i class="bi bi-building me-1"></i><strong>De:</strong> ${this.escapeHtml(notif.departamentoRemitente || 'Departamento no especificado')}
+                        </div>
+                        <div class="notificacion-fecha-usuario">
+                            <i class="bi bi-clock me-1"></i>${fechaFormateada}
+                        </div>
+                        <div class="notificacion-acciones-usuario">
+                            <button class="btn btn-danger btn-notificacion-usuario btn-marcar-usuario"
+                                    onclick="marcarComoLeidaUsuario(${notif.id})">
+                                Marcar como leído
+                            </button>
+                        </div>
+                    </div>
+                `;
+            },
 
+            // Función para formatear fecha en formato 12 horas
+            formatearFecha12Horas(fechaString) {
+                if (!fechaString) return 'Fecha no disponible';
+
+                try {
+                    const fecha = new Date(fechaString);
+
+                    // Formato completo con fecha y hora
+                    return fecha.toLocaleString('es-MX', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true
+                    });
+
+                } catch (error) {
+                    console.error('Error formateando fecha:', error);
+                    return 'Fecha no disponible';
+                }
+            },
+
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            },
+
+            mostrarError() {
+                const lista = document.getElementById('listaNotificacionesUsuario');
+                if (!lista) return;
+
+                lista.style.opacity = '0';
+                setTimeout(() => {
                     lista.innerHTML = `
-                        <div class="loading-notificaciones text-center p-3">
-                            <div class="spinner-border spinner-border-sm text-primary" role="status">
-                                <span class="visually-hidden">Cargando...</span>
-                            </div>
-                            <div class="mt-2">Cargando notificaciones...</div>
+                        <div class="sin-notificaciones-usuario text-danger">
+                            <i class="bi bi-exclamation-triangle" style="font-size: 2rem;"></i>
+                            <div class="mt-2">Error cargando notificaciones</div>
+                            <button class="btn btn-sm btn-outline-primary mt-2" onclick="cargarNotificacionesUsuario()">
+                                <i class="bi bi-arrow-clockwise"></i> Reintentar
+                            </button>
                         </div>
                     `;
                     lista.style.opacity = '1';
-                },
+                }, 150);
+            }
+        };
 
-                actualizarBadge(cantidad) {
-                    const badge = document.getElementById('badgeNotificacionesUsuario');
-                    if (!badge) return;
+        function cargarNotificacionesUsuario() {
+            NotificacionesManager.cargar();
+        }
 
-                    if (cantidad > 0) {
-                        badge.style.display = 'block';
-                        badge.textContent = cantidad > 99 ? '99+' : cantidad.toString();
-                    } else {
-                        badge.style.display = 'none';
-                    }
-                },
-
-                actualizarLista(notificaciones) {
-                    const lista = document.getElementById('listaNotificacionesUsuario');
-                    if (!lista) return;
-
-                    lista.style.opacity = '0';
-
-                    setTimeout(() => {
-                        if (!notificaciones || notificaciones.length === 0) {
-                            lista.innerHTML = this.plantillaSinNotificaciones();
-                        } else {
-                            lista.innerHTML = notificaciones.map(notif => this.plantillaNotificacion(notif)).join('');
-                        }
-                        lista.style.opacity = '1';
-                    }, 150);
-                },
-
-                plantillaSinNotificaciones() {
-                    return `
-                        <div class="sin-notificaciones-usuario">
-                            <i class="bi bi-bell-slash" style="font-size: 3rem; opacity: 0.5;"></i>
-                            <div class="mt-3" style="font-size: 0.9rem;">
-                                <div class="fw-bold">No tienes oficios pendientes</div>
-                                <div class="text-muted">Cuando recibas nuevos oficios, aparecerán aquí</div>
-                            </div>
-                        </div>
-                    `;
-                },
-
-                plantillaNotificacion(notif) {
-                    return `
-                        <div class="notificacion-item-usuario" data-id="${notif.id}">
-                            <div class="notificacion-tipo-usuario">
-                                <i class="bi bi-file-earmark-text me-1"></i>${this.escapeHtml(notif.tipoOficio || 'Oficio General')}
-                            </div>
-                            <div class="notificacion-departamento-usuario">
-                                <i class="bi bi-building me-1"></i><strong>De:</strong> ${this.escapeHtml(notif.departamentoRemitente || 'Departamento no especificado')}
-                            </div>
-                            <div class="notificacion-fecha-usuario">
-                                <i class="bi bi-clock me-1"></i>${this.escapeHtml(notif.fecha || 'Fecha no disponible')}
-                            </div>
-                            <div class="notificacion-acciones-usuario">
-                                <button class="btn btn-danger btn-notificacion-usuario btn-marcar-usuario"
-                                        onclick="marcarComoLeidaUsuario(${notif.id})">
-                                    Marcar como leído
-                                </button>
-                            </div>
-                        </div>
-                    `;
-                },
-
-                escapeHtml(text) {
-                    const div = document.createElement('div');
-                    div.textContent = text;
-                    return div.innerHTML;
-                },
-
-                mostrarError() {
-                    const lista = document.getElementById('listaNotificacionesUsuario');
-                    if (!lista) return;
-
-                    lista.style.opacity = '0';
-                    setTimeout(() => {
-                        lista.innerHTML = `
-                            <div class="sin-notificaciones-usuario text-danger">
-                                <i class="bi bi-exclamation-triangle" style="font-size: 2rem;"></i>
-                                <div class="mt-2">Error cargando notificaciones</div>
-                                <button class="btn btn-sm btn-outline-primary mt-2" onclick="cargarNotificacionesUsuario()">
-                                    <i class="bi bi-arrow-clockwise"></i> Reintentar
-                                </button>
-                            </div>
-                        `;
-                        lista.style.opacity = '1';
-                    }, 150);
+        // Función para marcar notificación como leída
+        async function marcarComoLeidaUsuario(id) {
+            try {
+                const notificacionElement = document.querySelector(`.notificacion-item-usuario[data-id="${id}"]`);
+                if (notificacionElement) {
+                    notificacionElement.style.transition = 'all 0.3s ease';
+                    notificacionElement.style.opacity = '0.3';
+                    notificacionElement.style.transform = 'translateX(-10px)';
                 }
+
+                const response = await fetch('/Notificacion/MarcarComoLeida', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(id)
+                });
+
+                if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
+                const result = await response.json();
+
+                if (result.success) {
+                    if (notificacionElement) {
+                        setTimeout(() => notificacionElement.remove(), 300);
+                    }
+                    setTimeout(() => cargarNotificacionesUsuario(), 500);
+                    mostrarMensaje('Oficio marcado como leído', 'success');
+                } else {
+                    if (notificacionElement) {
+                        notificacionElement.style.opacity = '1';
+                        notificacionElement.style.transform = 'translateX(0)';
+                    }
+                    mostrarMensaje('Error al marcar el oficio', 'error');
+                }
+            } catch (error) {
+                mostrarMensaje('Error de conexión: ' + error.message, 'error');
+            }
+        }
+
+        function mostrarMensaje(mensaje, tipo) {
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+            });
+            Toast.fire({ icon: tipo, title: mensaje });
+        }
+
+        (function() {
+            // Bloquear cualquier intento de modificar selectpicker globalmente
+            const originalSelectpicker = $.fn.selectpicker;
+            let selectpickerBlocked = false;
+
+            $.fn.selectpicker = function(arg) {
+                // Si alguien intenta hacer 'refresh' globalmente, bloquearlo
+                if (arg === 'refresh' && selectpickerBlocked) {
+                    console.log(' Selectpicker refresh bloqueado para proteger formularios');
+                    return this;
+                }
+                return originalSelectpicker.apply(this, arguments);
             };
 
-    
-            function cargarNotificacionesUsuario() {
-   
-                NotificacionesManager.cargar();
-            }
-
-            // Función para marcar notificación como leída
-            async function marcarComoLeidaUsuario(id) {
-                try {
-                    const notificacionElement = document.querySelector(`.notificacion-item-usuario[data-id="${id}"]`);
-                    if (notificacionElement) {
-                        notificacionElement.style.transition = 'all 0.3s ease';
-                        notificacionElement.style.opacity = '0.3';
-                        notificacionElement.style.transform = 'translateX(-10px)';
-                    }
-
-                    const response = await fetch('/Notificacion/MarcarComoLeida', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(id)
-                    });
-
-                    if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
-                    const result = await response.json();
-
-                    if (result.success) {
-                        if (notificacionElement) {
-                            setTimeout(() => notificacionElement.remove(), 300);
-                        }
-                        setTimeout(() => cargarNotificacionesUsuario(), 500);
-                        mostrarMensaje('Oficio marcado como leído', 'success');
-                    } else {
-                        if (notificacionElement) {
-                            notificacionElement.style.opacity = '1';
-                            notificacionElement.style.transform = 'translateX(0)';
-                        }
-                        mostrarMensaje('Error al marcar el oficio', 'error');
-                    }
-                } catch (error) {
-                    mostrarMensaje('Error de conexión: ' + error.message, 'error');
-                }
-            }
-
-            function mostrarMensaje(mensaje, tipo) {
-                const Toast = Swal.mixin({
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 3000,
-                    timerProgressBar: true,
-                });
-                Toast.fire({ icon: tipo, title: mensaje });
-            }
-
-            (function() {
-                // Bloquear cualquier intento de modificar selectpicker globalmente
-                const originalSelectpicker = $.fn.selectpicker;
-                let selectpickerBlocked = false;
-
-                $.fn.selectpicker = function(arg) {
-                    // Si alguien intenta hacer 'refresh' globalmente, bloquearlo
-                    if (arg === 'refresh' && selectpickerBlocked) {
-                        console.log(' Selectpicker refresh bloqueado para proteger formularios');
-                        return this;
-                    }
-                    return originalSelectpicker.apply(this, arguments);
-                };
-
-                // Proteger los componentes existentes cuando se cargan notificaciones
-                const observer = new MutationObserver(function(mutations) {
-                    mutations.forEach(function(mutation) {
-                        if (mutation.addedNodes.length) {
-                            Array.from(mutation.addedNodes).forEach(function(node) {
-                                if (node.nodeType === 1 &&
-                                    (node.classList.contains('notificacion-item-usuario') ||
-                                     node.querySelector('.notificacion-item-usuario'))) {
-                                    // Cuando se agrega una notificación, activar protección
-                                    selectpickerBlocked = true;
-                                    setTimeout(() => { selectpickerBlocked = false; }, 1000);
-                                }
-                            });
-                        }
-                    });
-                });
-
-                // Iniciar observador cuando el DOM esté listo
-                document.addEventListener('DOMContentLoaded', function() {
-                    observer.observe(document.body, { childList: true, subtree: true });
-
-                    // Configurar eventos del layout
-                    const hamburgerBtn = document.getElementById("hamburgerBtn");
-                    if (hamburgerBtn) {
-                        hamburgerBtn.addEventListener("click", function(e) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            Swal.fire({
-                                icon: "warning",
-                                title: "Menú lateral",
-                                text: "La funcionalidad completa del menú lateral estará disponible en la próxima actualización.",
-                                confirmButtonText: "Entendido",
-                                confirmButtonColor: "#3D6FAD"
-                            });
+            // Proteger los componentes existentes cuando se cargan notificaciones
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.addedNodes.length) {
+                        Array.from(mutation.addedNodes).forEach(function(node) {
+                            if (node.nodeType === 1 &&
+                                (node.classList.contains('notificacion-item-usuario') ||
+                                 node.querySelector('.notificacion-item-usuario'))) {
+                                // Cuando se agrega una notificación, activar protección
+                                selectpickerBlocked = true;
+                                setTimeout(() => { selectpickerBlocked = false; }, 1000);
+                            }
                         });
                     }
-
-           
-                    setTimeout(() => cargarNotificacionesUsuario(), 2000);
-
-                    // Cargar notificaciones cada 60 segundos
-                    setInterval(cargarNotificacionesUsuario, 60000);
                 });
-            })();
-        </script>
+            });
+
+            // Iniciar observador cuando el DOM esté listo
+            document.addEventListener('DOMContentLoaded', function() {
+                observer.observe(document.body, { childList: true, subtree: true });
+
+                // Configurar eventos del layout
+                const hamburgerBtn = document.getElementById("hamburgerBtn");
+                if (hamburgerBtn) {
+                    hamburgerBtn.addEventListener("click", function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        Swal.fire({
+                            icon: "warning",
+                            title: "Menú lateral",
+                            text: "La funcionalidad completa del menú lateral estará disponible en la próxima actualización.",
+                            confirmButtonText: "Entendido",
+                            confirmButtonColor: "#3D6FAD"
+                        });
+                    });
+                }
+
+                setTimeout(() => cargarNotificacionesUsuario(), 2000);
+
+                // Cargar notificaciones cada 60 segundos
+                setInterval(cargarNotificacionesUsuario, 60000);
+            });
+        })();
+    </script>
 
     
     <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
