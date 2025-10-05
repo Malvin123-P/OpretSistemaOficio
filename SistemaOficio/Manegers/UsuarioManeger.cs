@@ -190,15 +190,32 @@ namespace OfiGest.Managers
 
         public async Task<(bool eliminado, bool tieneOficios, bool tieneLogs, bool tieneNotificaciones)> EliminarAsync(int id)
         {
-            var usuario = await _context.Usuarios.FindAsync(id);
+            var usuario = await _context.Usuarios
+                .Include(u => u.Rol)
+                .FirstOrDefaultAsync(u => u.Id == id);
+
             if (usuario == null)
                 return (false, false, false, false);
+
+            // Verificar si es el último administrador
+            if (usuario.Rol?.Nombre == "Administrador")
+            {
+                var administradores = await _context.Usuarios
+                    .Include(u => u.Rol)
+                    .Where(u => u.Rol != null && u.Rol.Nombre == "Administrador")
+                    .ToListAsync();
+
+                if (administradores.Count <= 1)
+                {
+                    // No se puede eliminar el último administrador
+                    return (false, false, false, false); // Todos en false para que el controlador lo interprete correctamente
+                }
+            }
 
             // Verificar si tiene oficios asociados
             bool tieneOficios = await _context.Oficios.AnyAsync(o => o.UsuarioId == id);
             if (tieneOficios)
                 return (false, true, false, false);
-
             // Verificar si tiene logs asociados
             bool tieneLogs = await _context.LogOficios.AnyAsync(l => l.UsuarioAccionId == id);
             if (tieneLogs)
@@ -218,8 +235,10 @@ namespace OfiGest.Managers
             // Eliminar el usuario
             _context.Usuarios.Remove(usuario);
             var guardado = await _context.SaveChangesAsync() > 0;
+
             return (guardado, false, false, false);
         }
+
 
         public async Task<List<Departamento>> ObtenerDepartamentosAsync()
         {

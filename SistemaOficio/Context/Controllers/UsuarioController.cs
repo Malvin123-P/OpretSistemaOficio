@@ -295,11 +295,13 @@ namespace OfiGest.Controllers
             {
                 TempData["Error"] = "No se puede eliminar el usuario. Está asociado a notificaciones en el sistema.";
             }
+            else if (!eliminado)
+            {
+                TempData["Error"] = "No se puede eliminar el usuario. Es el último administrador del sistema.";
+            }
             else
             {
-                TempData[eliminado ? "Success" : "Error"] = eliminado
-                    ? "Usuario eliminado correctamente."
-                    : "No se pudo eliminar el usuario.";
+                TempData["Success"] = "Usuario eliminado correctamente.";
             }
 
             return RedirectToAction("Index");
