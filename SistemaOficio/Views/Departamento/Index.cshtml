@@ -8,12 +8,19 @@
 <style>
     /* Estilos para el hover de las filas de la tabla */
     .table-wrapper tbody tr {
-        transition: background-color 0.2s ease;
+        transition: background-color 0.2s ease, box-shadow 0.2s ease;
     }
 
         .table-wrapper tbody tr:hover {
             background-color: #f5f5f5 !important;
             cursor: pointer;
+        }
+
+        /* Efecto de sombra al hacer clic en la tabla principal */
+        .table-wrapper tbody tr:active {
+            box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.2);
+            background-color: #e9ecef !important;
+            transition: all 0.1s ease;
         }
 
         /* Para mantener la apariencia de filas deshabilitadas incluso en hover */
@@ -25,6 +32,24 @@
         .table-wrapper tbody tr.requiere-restablecer:hover {
             background-color: #ffeaa7 !important;
         }
+
+    /* Estilos para las filas de la tabla de divisiones */
+    .divisiones-scroll tbody tr {
+        transition: background-color 0.2s ease, box-shadow 0.2s ease;
+        cursor: pointer;
+    }
+
+        .divisiones-scroll tbody tr:hover {
+            background-color: #f5f5f5 !important;
+        }
+
+        /* Efecto de sombra al hacer clic en la tabla de divisiones */
+        .divisiones-scroll tbody tr:active {
+            box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.2);
+            background-color: #e9ecef !important;
+            transition: all 0.1s ease;
+        }
+
     .divisiones-scroll {
         max-height: 200px;
         overflow-y: auto;
@@ -154,7 +179,6 @@
         max-height: calc(2.5rem * 5 + 1rem);
         overflow-y: auto;
     }
-
 
     .btn-opretEliminar-sm {
         background-color: #F20505;
@@ -305,32 +329,32 @@
             const successMessage = '@Html.Raw(TempData["Success"]?.ToString())';
             const errorMessage = '@Html.Raw(TempData["Error"]?.ToString())';
 
-                   if (successMessage) {
-            Swal.fire({
-                title: "¡Módulo Departamentos!",
-                text: successMessage,
-                icon: "success",
-                timer: 2000,
-                showConfirmButton: false,
-                timerProgressBar: true
-            });
-        } else if (errorMessage) {
-            Swal.fire({
-                title: "¡Módulo Departamentos!",
-                text: errorMessage,
-                icon: "error",
-                confirmButtonText: "Entendido",
-                confirmButtonColor: "#3D6FAD"
-            });
-        }
-         const input = document.getElementById("searchInput");
+            if (successMessage) {
+                Swal.fire({
+                    title: "¡Módulo Departamentos!",
+                    text: successMessage,
+                    icon: "success",
+                    timer: 2000,
+                    showConfirmButton: false,
+                    timerProgressBar: true
+                });
+            } else if (errorMessage) {
+                Swal.fire({
+                    title: "¡Módulo Departamentos!",
+                    text: errorMessage,
+                    icon: "error",
+                    confirmButtonText: "Entendido",
+                    confirmButtonColor: "#3D6FAD"
+                });
+            }
+
+            const input = document.getElementById("searchInput");
             if (input) {
                 document.getElementById("searchInput").addEventListener("input", function () {
-                filtrarTablaPorColumnas("searchInput", "tablaDepartamentos", [0, 1, 2]);
+                    filtrarTablaPorColumnas("searchInput", "tablaDepartamentos", [0, 1, 2]);
                 });
             }
         });
-
 
         function filtrarTablaPorColumnas(inputId, tablaId, columnas) {
             const filtro = document.getElementById(inputId)?.value.toLowerCase();
@@ -356,7 +380,6 @@
                 contador.textContent = `Departamentos visibles: ${visibles}`;
             }
         }
-
 
         function deleteItem(departamentoId) {
             Swal.fire({
