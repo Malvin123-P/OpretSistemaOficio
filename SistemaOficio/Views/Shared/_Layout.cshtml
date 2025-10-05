@@ -14,6 +14,929 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/css/bootstrap-select.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
 
+    <style>
+        /* Variables y estilos base */
+        :root {
+            --color-terciario: #F20505;
+            --color-primario: #3D6FAD;
+            --color-secundario: #0B5926;
+            --color-texto: #333;
+            --color-texto-claro: #e0e0e0;
+            --transicion-rapida: all 0.3s ease;
+            --estatus-activo: #28a745; /* Verde para activo */
+            --estatus-inactivo: #dc3545; /* Rojo para inactivo */
+            --estatus-ausente: #ffc107; /* Amarillo para ausente */
+            --estatus-ocupado: #6c757d; /* Gris para ocupado */
+        }
+
+        html, body {
+            overflow: hidden; /* Elimina scroll global */
+            height: 100%;
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f8f9fa;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background-color: var(--color-primario);
+            min-height: 100vh;
+            font-size: 0.95rem;
+            width: 360px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            transition: var(--transicion-rapida);
+            overflow-y: auto; /* Scroll solo si el contenido excede */
+        }
+
+            .sidebar.show {
+                left: 0;
+            }
+
+        .logo-container {
+            background-color: white;
+            text-align: center;
+            border-bottom: 3px solid var(--color-secundario);
+        }
+
+            .logo-container img {
+                width: 100%;
+                max-width: 343px;
+                height: auto;
+                object-fit: contain;
+            }
+
+        .nav-links {
+            display: flex;
+            flex-direction: column;
+        }
+
+            .nav-links a {
+                background-color: white;
+                color: black;
+                font-weight: bold;
+                text-decoration: none;
+                margin-bottom: 0;
+                display: block;
+                width: 100%;
+                padding: 0.8rem 0.76rem;
+                border: 1px solid var(--color-primario);
+                border-radius: 0;
+                transition: var(--transicion-rapida);
+                box-sizing: border-box;
+            }
+
+                .nav-links a:hover {
+                    background-color: var(--color-secundario);
+                    color: white;
+                }
+
+            .nav-links i {
+                font-size: 1.2rem;
+                margin-right: 10px;
+            }
+
+        /* Topbar */
+        .topbar {
+            background-color: var(--color-primario);
+            padding: 1.9rem 1rem;
+            color: white;
+            font-weight: bold;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 100px;
+        }
+
+        .hamburger-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.8rem;
+            cursor: pointer;
+            padding: 5px 10px;
+            z-index: 1060;
+        }
+
+        /* Contenido principal */
+        .main-content {
+            padding: 1rem;
+            flex-grow: 1;
+            overflow-y: auto;
+            transition: var(--transicion-rapida);
+            width: 100%;
+        }
+
+        /* Footer */
+        footer {
+            padding: 1rem 2rem;
+            background-color: #f1f1f1;
+            flex-shrink: 0;
+        }
+
+        /* Overlay */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1040;
+            display: none;
+            transition: opacity 0.3s ease;
+        }
+
+            .overlay.show {
+                display: block;
+                opacity: 1;
+            }
+
+        /* Dropdown general */
+        .dropdown-menu {
+            background-color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0;
+            margin: 5px 0 0 0;
+            width: 100%;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+            .dropdown-menu a {
+                background-color: #f8f9fa;
+                padding-left: 2.5rem;
+            }
+
+        /* Botón de configuraciones con flecha dinámica */
+        .configuraciones-btn {
+            background-color: white;
+            color: black;
+            font-weight: bold;
+            text-decoration: none;
+            margin-bottom: 0;
+            display: block;
+            width: 100%;
+            padding: 0.8rem 0.76rem;
+            border: 1px solid var(--color-primario);
+            border-radius: 0;
+            transition: var(--transicion-rapida);
+            box-sizing: border-box;
+            text-align: left;
+            position: relative;
+        }
+
+            .configuraciones-btn:hover {
+                background-color: var(--color-secundario);
+                color: white;
+            }
+
+            .configuraciones-btn.dropdown-toggle::after {
+                content: " ";
+                display: inline-block;
+                margin-left: 0.5rem;
+                vertical-align: middle;
+                border-top: 0.4em solid black;
+                border-right: 0.4em solid transparent;
+                border-left: 0.4em solid transparent;
+                transition: transform 0.2s ease;
+                position: absolute;
+                right: 15px;
+                top: 50%;
+                transform: translateY(-50%);
+            }
+
+            .configuraciones-btn:hover.dropdown-toggle::after {
+                border-top-color: white;
+            }
+
+            .configuraciones-btn.dropdown-toggle[aria-expanded="true"]::after {
+                transform: translateY(-50%) rotate(180deg);
+            }
+
+        /* Perfil de usuario - CORREGIDO */
+        .imagen-perfil-contenedor {
+            position: relative;
+            width: 60px;
+            height: 60px;
+            flex-shrink: 0;
+        }
+
+        .imagen-perfil-usuario {
+            width: 100%;
+            height: 100%;
+            border-radius: 8px; /* Bordes cuadrados con esquinas ligeramente redondeadas */
+            object-fit: cover;
+             border: 2px solid #fff; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            transition: var(--transicion-rapida);
+        }
+
+     
+            .imagen-perfil-usuario[src*="/images/usuario.png"],
+            .imagen-perfil-usuario[src$="usuario.png"],
+            .imagen-perfil-default {
+                border-radius: 8px !important;
+                object-fit: cover !important;
+                background-color: #ECEFF1;
+            }
+
+            .imagen-perfil-usuario:hover {
+                transform: scale(1.05);
+                border-color: var(--color-secundario);
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            }
+
+        /* Indicador de estatus - CORREGIDO */
+        .indicador-estatus {
+            position: absolute;
+            bottom: -2px;
+            right: -2px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 2px solid white;
+            background: var(--estatus-activo);
+            animation: pulse-status 2s infinite;
+            z-index: 10;
+        }
+
+        .estatus-activo {
+            background-color: var(--estatus-activo);
+        }
+
+        .estatus-inactivo {
+            background-color: var(--estatus-inactivo);
+        }
+
+        .estatus-ausente {
+            background-color: var(--estatus-ausente);
+        }
+
+        .estatus-ocupado {
+            background-color: var(--estatus-ocupado);
+        }
+
+        @@keyframes pulse-status {
+            0% {
+                box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7);
+            }
+
+            70% {
+                box-shadow: 0 0 0 5px rgba(40, 167, 69, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(40, 167, 69, 0);
+            }
+        }
+
+        .usuario-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 8px 12px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            transition: background 0.3s ease;
+            position: relative;
+        }
+
+            .usuario-info:hover {
+                background: rgba(255,255,255,0.2);
+            }
+
+            .usuario-info.dropdown-toggle::after {
+                content: " ";
+                display: inline-block;
+                margin-left: 0.5rem;
+                vertical-align: middle;
+                border-top: 0.4em solid white;
+                border-right: 0.4em solid transparent;
+                border-left: 0.4em solid transparent;
+                transition: transform 0.2s ease;
+            }
+
+            .usuario-info.dropdown-toggle[aria-expanded="true"]::after {
+                transform: rotate(180deg);
+            }
+
+        .usuario-texto {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .usuario-nombre {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: white;
+            line-height: 1.2;
+        }
+
+        .usuario-rol {
+            font-weight: normal;
+            font-size: 0.8rem;
+            color: var(--color-texto-claro);
+            line-height: 1.2;
+        }
+
+        /* Notificaciones */
+        .dropdown-notificaciones-usuario {
+            min-width: 400px;
+            max-width: 400px;
+            padding: 0.5px;
+        }
+
+        .scrollable-notificaciones-usuario {
+            max-height: 153px;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .notificacion-item-usuario {
+            border-left: 4px solid var(--color-secundario);
+            padding: 12px;
+            margin: 8px 0;
+            background: #f8f9fa;
+            border-radius: 6px;
+            transition: var(--transicion-rapida);
+        }
+
+            .notificacion-item-usuario:hover {
+                background: #e9ecef;
+                transform: translateX(2px);
+            }
+
+        .notificacion-tipo-usuario {
+            font-weight: bold;
+            color: var(--color-secundario);
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+
+        .notificacion-departamento-usuario {
+            font-size: 0.85rem;
+            color: #495057;
+            margin-bottom: 3px;
+        }
+
+        .notificacion-fecha-usuario {
+            font-size: 0.75rem;
+            color: #6c757d;
+            margin-bottom: 8px;
+        }
+
+        .notificacion-acciones-usuario {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .btn-notificacion-usuario {
+            padding: 4px 10px;
+            font-size: 0.7rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-marcar-usuario {
+            background: var(--color-terciario);
+            color: white;
+            border: 1px solid #000000;
+        }
+
+            .btn-marcar-usuario:hover {
+                background: var(--color-terciario);
+                border: 1px solid #000000;
+            }
+
+        .sin-notificaciones-usuario {
+            text-align: center;
+            color: #6c757d;
+        }
+
+        .loading-notificaciones {
+            padding: 30px 20px;
+            text-align: center;
+        }
+
+        .badge-notificacion {
+            font-size: 0.8rem;
+            padding: 0.3em 0.5em;
+        }
+
+        /* Scroll personalizado */
+        .scrollable-notificaciones-usuario::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .scrollable-notificaciones-usuario::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+
+        .scrollable-notificaciones-usuario::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 3px;
+        }
+
+            .scrollable-notificaciones-usuario::-webkit-scrollbar-thumb:hover {
+                background: #a8a8a8;
+            }
+
+        .dropdown-menu.show {
+            display: block;
+        }
+
+        .preview-imagen {
+            max-width: 150px;
+            max-height: 150px;
+            margin-top: 10px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        #listaNotificacionesUsuario {
+            transition: opacity 0.2s ease-in-out;
+        }
+
+        .notificacion-item-usuario {
+            transition: all 0.3s ease;
+        }
+
+        .loading-notificaciones {
+            transition: opacity 0.3s ease;
+        }
+
+        .sin-notificaciones-usuario {
+            transition: opacity 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="overlay" id="overlay"></div>
+    <div class="d-flex vh-100">
+        <div class="sidebar" id="sidebar">
+            <div class="logo-container">
+                <img src="~/images/LogoInstitucional.png" alt="Logo OPRET" />
+            </div>
+            <div class="nav-links">
+                @{
+                    var rolUsuario = Context.Session.GetString("RolUsuario");
+                    var EsEncargado = Context.Session.GetString("EsEncargadoDepartamental");
+                }
+
+                <a asp-controller="Oficio" asp-action="Index"><i class="bi bi-house"></i> INICIO</a>
+
+                <div class="dropdown">
+                    <a class="configuraciones-btn dropdown-toggle d-flex justify-content-between align-items-center"
+                       href="#" role="button" id="configuracionesDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <span>
+                            <i class="bi @(rolUsuario == "Administrador" ? "bi-gear" : "bi-info-circle")"></i>
+                            @(rolUsuario == "Administrador" ? "CONFIGURACIONES" : "INFORMACIONES")
+                        </span>
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="configuracionesDropdown">
+                        <li><a class="dropdown-item" asp-controller="TipoOficio" asp-action="Index"><i class="bi bi-file-earmark-code"></i> TIPO DE OFICIOS</a></li>
+                        <li><a class="dropdown-item" asp-controller="Departamento" asp-action="Index"><i class="bi bi-building"></i> DEPARTAMENTOS</a></li>
+                        @if (rolUsuario == "Administrador")
+                        {
+                            <li><a class="dropdown-item" asp-controller="Divisiones" asp-action="Index"><i class="bi bi-diagram-3"></i> DIVISIONES</a></li>
+                            <li><a class="dropdown-item" asp-controller="Usuario" asp-action="Index"><i class="bi bi-person-badge"></i> USUARIOS</a></li>
+                        }
+                    </ul>
+                </div>
+                <a asp-controller="Estadistica" asp-action="PorTipo"><i class="bi bi-bar-chart-line"></i> ESTADÍSTICAS</a>
+                <a asp-controller="Login" asp-action="Logout"><i class="bi bi-box-arrow-right"></i> CERRAR SESIÓN</a>
+            </div>
+        </div>
+
+        <div class="flex-grow-1 d-flex flex-column">
+            <div class="topbar d-flex justify-content-between align-items-center px-3">
+                <button class="hamburger-btn" id="hamburgerBtn" aria-label="Abrir menú">
+                    <i class="bi bi-list"></i>
+                </button>
+
+                <div class="dropdown">
+                    @{
+                        var imagenPerfil = Context.Session.GetString("ImagenPerfil");
+                        var rutaImagen = !string.IsNullOrEmpty(imagenPerfil) ? imagenPerfil : "/images/usuario.png";
+                        var nombreUsuario = Context.Session.GetString("NombreUsuario") ?? "Usuario";
+                        var rolUsuarioSession = Context.Session.GetString("RolUsuario") ?? "Rol no asignado";
+                        var estatusUsuario = Context.Session.GetString("EstatusUsuario") ?? "activo";
+                    }
+
+                    @if (EsEncargado == true.ToString())
+                    {
+                        <button class="btn dropdown-toggle position-relative d-flex align-items-center gap-1 usuario-info"
+                                type="button" id="usuarioDropdown" data-bs-toggle="dropdown" aria-expanded="false"
+                                style="max-width: 260px;" onclick="cargarNotificacionesUsuario()">
+                            <div class="d-flex align-items-center gap-2 w-100">
+                                <!-- Contenedor de imagen con indicador de estatus - CORREGIDO -->
+                                <div class="imagen-perfil-contenedor">
+                                    <img src="@rutaImagen" alt="Usuario" class="imagen-perfil-usuario"
+                                         onerror="manejarErrorImagen(this)" />
+                                    <!-- Indicador de estatus - CORREGIDO -->
+                                    <div class="indicador-estatus estatus-@estatusUsuario"></div>
+                                </div>
+
+                                <div class="usuario-texto text-start">
+                                    <span class="usuario-nombre">@nombreUsuario</span>
+                                    <span class="usuario-rol">@rolUsuarioSession</span>
+                                </div>
+                            </div>
+
+                            <span id="badgeNotificacionesUsuario"
+                                  class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger badge-notificacion"
+                                  style="display: none;">
+                                0
+                                <span class="visually-hidden">unread messages</span>
+                            </span>
+                        </button>
+
+                        <ul class="dropdown-menu dropdown-menu-end mt-2 dropdown-notificaciones-usuario"
+                            aria-labelledby="usuarioDropdown">
+                            <li>
+                                <div class="scrollable-notificaciones-usuario" id="listaNotificacionesUsuario">
+                                    <div class="loading-notificaciones text-center p-3">
+                                        <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                            <span class="visually-hidden">Cargando...</span>
+                                        </div>
+                                        <div class="mt-2">Cargando notificaciones...</div>
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
+                    }
+                    @if (EsEncargado != true.ToString())
+                    {
+                        <button class="btn usuario-info position-relative d-flex align-items-center gap-1"
+                                type="button" style="max-width: 260px;">
+                            <div class="d-flex align-items-center gap-2 w-100">
+                                <!-- Contenedor de imagen con indicador de estatus - CORREGIDO -->
+                                <div class="imagen-perfil-contenedor">
+                                    <img src="@rutaImagen" alt="Usuario" class="imagen-perfil-usuario"
+                                         onerror="manejarErrorImagen(this)" />
+                                    <!-- Indicador de estatus - CORREGIDO -->
+                                    <div class="indicador-estatus estatus-@estatusUsuario"></div>
+                                </div>
+
+                                <div class="usuario-texto text-start">
+                                    <span class="usuario-nombre">@nombreUsuario</span>
+                                    <span class="usuario-rol">@rolUsuarioSession</span>
+                                </div>
+                            </div>
+                        </button>
+                    }
+                </div>
+            </div>
+
+            <div class="main-content" id="mainContent">
+                @RenderBody()
+            </div>
+
+            <footer class="border-top pt-3 text-muted px-4">
+                <div class="d-flex justify-content-between">
+                    <span>&copy; @DateTime.Now.Year OfiGest - Gestión de Oficios Institucionales - Todos los derechos reservados</span>
+                    <span>Último acceso: @Context.Session.GetString("UltimoAcceso")</span>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        // Función para manejar errores en imágenes de perfil
+        function manejarErrorImagen(img) {
+            img.src = '/images/usuario.png';
+            img.classList.add('imagen-perfil-default');
+            // Forzar estilos adicionales por si acaso
+            img.style.borderRadius = '8px';
+            img.style.objectFit = 'cover';
+        }
+
+        // Gestión de notificaciones
+        const NotificacionesManager = {
+            async cargar() {
+                try {
+                    this.mostrarCargando();
+                    await new Promise(resolve => setTimeout(resolve, 300));
+
+                    const [dataCantidad, dataLista] = await Promise.all([
+                        this.obtenerCantidad(),
+                        this.obtenerLista()
+                    ]);
+
+                    this.actualizarBadge(dataCantidad.cantidad);
+                    this.actualizarLista(dataLista.notificaciones);
+                } catch (error) {
+                    this.mostrarError();
+                }
+            },
+
+            async obtenerCantidad() {
+                const response = await fetch('/Notificacion/ObtenerCantidad');
+                if (!response.ok) throw new Error('Error en cantidad');
+                return await response.json();
+            },
+
+            async obtenerLista() {
+                const response = await fetch('/Notificacion/ObtenerLista');
+                if (!response.ok) throw new Error('Error en lista');
+                return await response.json();
+            },
+
+            mostrarCargando() {
+                const lista = document.getElementById('listaNotificacionesUsuario');
+                if (!lista) return;
+
+                lista.innerHTML = `
+                    <div class="loading-notificaciones text-center p-3">
+                        <div class="spinner-border spinner-border-sm text-primary" role="status">
+                            <span class="visually-hidden">Cargando...</span>
+                        </div>
+                        <div class="mt-2">Cargando notificaciones...</div>
+                    </div>
+                `;
+                lista.style.opacity = '1';
+            },
+
+            actualizarBadge(cantidad) {
+                const badge = document.getElementById('badgeNotificacionesUsuario');
+                if (!badge) return;
+
+                if (cantidad > 0) {
+                    badge.style.display = 'block';
+                    badge.textContent = cantidad > 99 ? '99+' : cantidad.toString();
+                } else {
+                    badge.style.display = 'none';
+                }
+            },
+
+            actualizarLista(notificaciones) {
+                const lista = document.getElementById('listaNotificacionesUsuario');
+                if (!lista) return;
+
+                lista.style.opacity = '0';
+
+                setTimeout(() => {
+                    if (!notificaciones || notificaciones.length === 0) {
+                        lista.innerHTML = this.plantillaSinNotificaciones();
+                    } else {
+                        lista.innerHTML = notificaciones.map(notif => this.plantillaNotificacion(notif)).join('');
+                    }
+                    lista.style.opacity = '1';
+                }, 150);
+            },
+
+            plantillaSinNotificaciones() {
+                return `
+                    <div class="sin-notificaciones-usuario">
+                        <i class="bi bi-bell-slash" style="font-size: 3rem; opacity: 0.5;"></i>
+                        <div class="mt-3" style="font-size: 0.9rem;">
+                            <div class="fw-bold">No tienes oficios pendientes</div>
+                            <div class="text-muted">Cuando recibas nuevos oficios, aparecerán aquí</div>
+                        </div>
+                    </div>
+                `;
+            },
+
+            plantillaNotificacion(notif) {
+                // Formatear la fecha a formato 12 horas
+                const fechaFormateada = this.formatearFecha12Horas(notif.fecha);
+
+                return `
+                    <div class="notificacion-item-usuario" data-id="${notif.id}">
+                        <div class="notificacion-tipo-usuario">
+                            <i class="bi bi-file-earmark-text me-1"></i>${this.escapeHtml(notif.tipoOficio || 'Oficio General')}
+                        </div>
+                        <div class="notificacion-departamento-usuario">
+                            <i class="bi bi-building me-1"></i><strong>De:</strong> ${this.escapeHtml(notif.departamentoRemitente || 'Departamento no especificado')}
+                        </div>
+                        <div class="notificacion-fecha-usuario">
+                            <i class="bi bi-clock me-1"></i>${fechaFormateada}
+                        </div>
+                        <div class="notificacion-acciones-usuario">
+                            <button class="btn btn-danger btn-notificacion-usuario btn-marcar-usuario"
+                                    onclick="marcarComoLeidaUsuario(${notif.id})">
+                                Marcar como leído
+                            </button>
+                        </div>
+                    </div>
+                `;
+            },
+
+            // Función para formatear fecha en formato 12 horas
+            formatearFecha12Horas(fechaString) {
+                if (!fechaString) return 'Fecha no disponible';
+
+                try {
+                    const fecha = new Date(fechaString);
+
+                    // Formato completo con fecha y hora
+                    return fecha.toLocaleString('es-MX', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true
+                    });
+
+                } catch (error) {
+                    console.error('Error formateando fecha:', error);
+                    return 'Fecha no disponible';
+                }
+            },
+
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            },
+
+            mostrarError() {
+                const lista = document.getElementById('listaNotificacionesUsuario');
+                if (!lista) return;
+
+                lista.style.opacity = '0';
+                setTimeout(() => {
+                    lista.innerHTML = `
+                        <div class="sin-notificaciones-usuario text-danger">
+                            <i class="bi bi-exclamation-triangle" style="font-size: 2rem;"></i>
+                            <div class="mt-2">Error cargando notificaciones</div>
+                            <button class="btn btn-sm btn-outline-primary mt-2" onclick="cargarNotificacionesUsuario()">
+                                <i class="bi bi-arrow-clockwise"></i> Reintentar
+                            </button>
+                        </div>
+                    `;
+                    lista.style.opacity = '1';
+                }, 150);
+            }
+        };
+
+        function cargarNotificacionesUsuario() {
+            NotificacionesManager.cargar();
+        }
+
+        // Función para marcar notificación como leída
+        async function marcarComoLeidaUsuario(id) {
+            try {
+                const notificacionElement = document.querySelector(`.notificacion-item-usuario[data-id="${id}"]`);
+                if (notificacionElement) {
+                    notificacionElement.style.transition = 'all 0.3s ease';
+                    notificacionElement.style.opacity = '0.3';
+                    notificacionElement.style.transform = 'translateX(-10px)';
+                }
+
+                const response = await fetch('/Notificacion/MarcarComoLeida', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(id)
+                });
+
+                if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
+                const result = await response.json();
+
+                if (result.success) {
+                    if (notificacionElement) {
+                        setTimeout(() => notificacionElement.remove(), 300);
+                    }
+                    setTimeout(() => cargarNotificacionesUsuario(), 500);
+                    mostrarMensaje('Oficio marcado como leído', 'success');
+                } else {
+                    if (notificacionElement) {
+                        notificacionElement.style.opacity = '1';
+                        notificacionElement.style.transform = 'translateX(0)';
+                    }
+                    mostrarMensaje('Error al marcar el oficio', 'error');
+                }
+            } catch (error) {
+                mostrarMensaje('Error de conexión: ' + error.message, 'error');
+            }
+        }
+
+        function mostrarMensaje(mensaje, tipo) {
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+            });
+            Toast.fire({ icon: tipo, title: mensaje });
+        }
+
+        // Función para cambiar estatus del usuario (ejemplo)
+        function cambiarEstatusUsuario(nuevoEstatus) {
+            const indicador = document.querySelector('.indicador-estatus');
+            if (indicador) {
+                // Remover todas las clases de estatus
+                indicador.classList.remove('estatus-activo', 'estatus-inactivo', 'estatus-ausente', 'estatus-ocupado');
+                // Agregar la nueva clase
+                indicador.classList.add(`estatus-${nuevoEstatus}`);
+
+                // Aquí podrías enviar una petición al servidor para actualizar el estatus
+                console.log(`Estatus cambiado a: ${nuevoEstatus}`);
+            }
+        }
+
+        (function() {
+            // Bloquear cualquier intento de modificar selectpicker globalmente
+            const originalSelectpicker = $.fn.selectpicker;
+            let selectpickerBlocked = false;
+
+            $.fn.selectpicker = function(arg) {
+                // Si alguien intenta hacer 'refresh' globalmente, bloquearlo
+                if (arg === 'refresh' && selectpickerBlocked) {
+                    console.log(' Selectpicker refresh bloqueado para proteger formularios');
+                    return this;
+                }
+                return originalSelectpicker.apply(this, arguments);
+            };
+
+            // Proteger los componentes existentes cuando se cargan notificaciones
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.addedNodes.length) {
+                        Array.from(mutation.addedNodes).forEach(function(node) {
+                            if (node.nodeType === 1 &&
+                                (node.classList.contains('notificacion-item-usuario') ||
+                                 node.querySelector('.notificacion-item-usuario'))) {
+                                // Cuando se agrega una notificación, activar protección
+                                selectpickerBlocked = true;
+                                setTimeout(() => { selectpickerBlocked = false; }, 1000);
+                            }
+                        });
+                    }
+                });
+            });
+
+            // Iniciar observador cuando el DOM esté listo
+            document.addEventListener('DOMContentLoaded', function() {
+                observer.observe(document.body, { childList: true, subtree: true });
+
+                // Configurar eventos del layout
+                const hamburgerBtn = document.getElementById("hamburgerBtn");
+                if (hamburgerBtn) {
+                    hamburgerBtn.addEventListener("click", function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        Swal.fire({
+                            icon: "warning",
+                            title: "Menú lateral",
+                            text: "La funcionalidad completa del menú lateral estará disponible en la próxima actualización.",
+                            confirmButtonText: "Entendido",
+                            confirmButtonColor: "#3D6FAD"
+                        });
+                    });
+                }
+
+                setTimeout(() => cargarNotificacionesUsuario(), 2000);
+
+                // Cargar notificaciones cada 60 segundos
+                setInterval(cargarNotificacionesUsuario, 60000);
+            });
+        })();
+    </script>
+
+    <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+        <symbol id="check-circle-fill" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM6.97 11.03a.75.75 0 0 0 1.07 0l3.992-3.992a.75.75 0 1 0-1.06-1.06L7.5 9.439 5.53 7.47a.75.75 0 0 0-1.06 1.06l2.5 2.5z" />
+        </symbol>
+        <symbol id="exclamation-triangle-fill" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M8.982 1.566a1.13 1.13 0 0 0-1.964 0L.165 13.233c-.457.778.091 1.767.982 1.767h13.707c.89 0 1.438-.99.982-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1-2.002 0 1 1 0 0 1 2.002 0z" />
+        </symbol>
+    </svg>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
+@* <!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - OfiGest</title>
+
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/OfiGest.styles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" />
+    <link rel="icon" type="image/x-icon" href="/images/logoOPRETFooter.png">
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/css/bootstrap-select.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
+
 
     <style>
         /* Variables y estilos base */
@@ -108,25 +1031,16 @@
         }
 
         .hamburger-btn {
+            background: none;
             border: none;
             color: white;
             font-size: 1.8rem;
             cursor: pointer;
+            padding: 5px 10px;
             z-index: 1060;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            padding: 8px 12px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 10px;
-            transition: background 0.3s ease;
         }
 
-            .hamburger-btn:hover {
-                background: rgba(255,255,255,0.2);
-            }
-
-
+           
 
         /* Contenido principal */
         .main-content {
@@ -836,4 +1750,4 @@
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>
-</html>﻿
+</html>﻿ *@
