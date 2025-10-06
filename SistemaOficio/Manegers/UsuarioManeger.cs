@@ -262,6 +262,10 @@ namespace OfiGest.Managers
                 .ToListAsync();
         }
 
+        public async Task<bool> ExisteAdministradorAsync()
+        {
+            return await _context.Usuarios.AnyAsync(u => u.RolId == 1 && u.Activo);
+        }
         public async Task<bool> ExisteEncargadoEnDepartamentoAsync(int departamentoId, int? usuarioIdExcluir = null)
         {
             var query = _context.Usuarios

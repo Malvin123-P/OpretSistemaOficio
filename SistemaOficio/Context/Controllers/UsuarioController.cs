@@ -77,12 +77,23 @@ namespace OfiGest.Controllers
             await CargarListasAsync(usuario.DepartamentoId, usuario.RolId, usuario.DivisionId, usuario.EsEncargadoDepartamental);
             return View(usuario);
         }
-     
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(UsuarioModel model)
         {
             await CargarListasAsync(model.DepartamentoId, model.RolId, model.DivisionId, model.EsEncargadoDepartamental);
+
+            // Validar que no se pueda crear más de un administrador
+            if (model.RolId == 1) // Asumiendo que 1 es el ID del rol Administrador
+            {
+                bool existeAdministrador = await _usuarioManager.ExisteAdministradorAsync();
+                if (existeAdministrador)
+                {
+                    TempData["Validacion"] = "Ya existe un administrador en el sistema. No se pueden crear más administradores.";
+                    return View(model);
+                }
+            }
 
             if (!string.IsNullOrEmpty(model.Nombre) && !EsNombreValido(model.Nombre))
             {
@@ -105,13 +116,14 @@ namespace OfiGest.Controllers
                 var extension = Path.GetExtension(model.ArchivoImagen.FileName).ToLower();
                 if (!extensionesPermitidas.Contains(extension))
                 {
-                         TempData["Validacion"] ="Formato de archivo no permitido. Use JPG, JPEG, PNG o GIF.";
+                    TempData["Validacion"] = "Formato de archivo no permitido. Use JPG, JPEG, PNG o GIF.";
+                    return View(model);
                 }
 
                 if (model.ArchivoImagen.Length > 2 * 1024 * 1024)
                 {
                     TempData["Validacion"] = "La imagen no puede ser mayor a 2MB.";
-              
+                    return View(model);
                 }
             }
 
@@ -146,7 +158,6 @@ namespace OfiGest.Controllers
                 return View(model);
             }
 
-
             var creado = await _usuarioManager.CrearAsync(model);
 
             if (creado)
@@ -155,7 +166,7 @@ namespace OfiGest.Controllers
                 return RedirectToAction("Index");
             }
 
-            ModelState.AddModelError(string.Empty, "No se pudo crear el usuario. Verifique referencias o correo duplicado.");
+            TempData["Error"] = "No se pudo crear el usuario. Verifique referencias o correo duplicado.";
             return View(model);
         }
 
@@ -167,6 +178,23 @@ namespace OfiGest.Controllers
 
             model.EsEdicion = true;
             await CargarListasAsync(model.DepartamentoId, model.RolId, model.DivisionId, model.EsEncargadoDepartamental);
+
+            if (original.RolId != 1 && model.RolId == 1)
+            {
+                bool existeAdministrador = await _usuarioManager.ExisteAdministradorAsync();
+                if (existeAdministrador)
+                {
+                    TempData["Validacion"] = "Ya existe un administrador en el sistema. No se pueden asignar más administradores.";
+                    return View(model);
+                }
+            }
+
+      
+            if (original.RolId == 1 && !model.Activo)
+            {
+                TempData["Validacion"] = "Un administrador no puede ser desactivado en el sistema.";
+                return View(model);
+            }
 
             if (!string.IsNullOrEmpty(model.Nombre) && !EsNombreValido(model.Nombre))
             {
@@ -272,7 +300,6 @@ namespace OfiGest.Controllers
                 return View(model);
             }
         }
-
         public async Task<IActionResult> Delete(int id)
         {
             if (id <= 0)
