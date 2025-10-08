@@ -107,6 +107,13 @@ namespace OfiGest.Controllers
                 return View(model);
             }
 
+     
+            if (!string.IsNullOrEmpty(model.Correo) && !EsCorreoValido(model.Correo))
+            {
+                TempData["Validacion"] = "El formato del correo electrónico no es válido.";
+                return View(model);
+            }
+
             if (model.EsEncargadoDepartamental)
                 ModelState.Remove(nameof(model.DivisionId));
 
@@ -189,7 +196,6 @@ namespace OfiGest.Controllers
                 }
             }
 
-      
             if (original.RolId == 1 && !model.Activo)
             {
                 TempData["Validacion"] = "Un administrador no puede ser desactivado en el sistema.";
@@ -205,6 +211,13 @@ namespace OfiGest.Controllers
             if (!string.IsNullOrEmpty(model.Apellido) && !EsNombreValido(model.Apellido))
             {
                 TempData["Validacion"] = "El apellido solo puede contener letras, números, espacios y guiones.";
+                return View(model);
+            }
+
+      
+            if (!string.IsNullOrEmpty(model.Correo) && !EsCorreoValido(model.Correo))
+            {
+                TempData["Validacion"] = "El formato del correo electrónico no es válido.";
                 return View(model);
             }
 
@@ -401,6 +414,35 @@ namespace OfiGest.Controllers
             return regex.IsMatch(nombre);
         }
 
+        private bool EsCorreoValido(string correo)
+        {
+            try
+            {
+                // Expresión regular básica para validar formato de correo
+                var regex = new Regex(@"^[^@\s]+@[^@\s]+\.[^@\s]+$");
+                return regex.IsMatch(correo);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+  
+        [HttpGet]
+        public async Task<JsonResult> VerificarCorreo(string correo, int excludeId = 0)
+        {
+            try
+            {
+                var existe = await _usuarioManager.CorreoExistsAsync(correo, excludeId);
+                return Json(new { existe = existe });
+            }
+            catch (Exception ex)
+            {
+                // Log the exception
+                return Json(new { existe = false });
+            }
+        }
     }
 }
 

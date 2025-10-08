@@ -393,6 +393,12 @@ namespace OfiGest.Managers
             bool tieneOficios = await _context.Oficios.AnyAsync(o => o.UsuarioId == usuarioId);
             return !tieneOficios;
         }
+
+        public async Task<bool> CorreoExistsAsync(string correo, int excludeId = 0)
+        {
+            return await _context.Usuarios
+                .AnyAsync(c => c.Correo == correo && c.Id != excludeId);
+        }
     }
 }
 
