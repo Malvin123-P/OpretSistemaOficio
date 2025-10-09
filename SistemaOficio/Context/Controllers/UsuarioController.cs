@@ -85,7 +85,7 @@ namespace OfiGest.Controllers
             await CargarListasAsync(model.DepartamentoId, model.RolId, model.DivisionId, model.EsEncargadoDepartamental);
 
             // Validar que no se pueda crear más de un administrador
-            if (model.RolId == 1) // Asumiendo que 1 es el ID del rol Administrador
+            if (model.RolId == 1) 
             {
                 bool existeAdministrador = await _usuarioManager.ExisteAdministradorAsync();
                 if (existeAdministrador)
