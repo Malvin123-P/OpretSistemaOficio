@@ -20,10 +20,11 @@
             --color-terciario: #F20505;
             --color-primario: #3D6FAD;
             --color-secundario: #0B5926;
+            --color-secundarioH: #2980B9;
             --color-texto: #333;
             --color-texto-claro: #e0e0e0;
             --transicion-rapida: all 0.3s ease;
-            --estatus-activo: #28a745; /* Verde para activo */
+            --estatus-activo: #3D6FAD; /* Verde para activo */
             --estatus-inactivo: #dc3545; /* Rojo para inactivo */
             --estatus-ausente: #ffc107; /* Amarillo para ausente */
             --estatus-ocupado: #6c757d; /* Gris para ocupado */
@@ -62,7 +63,7 @@
 
             .logo-container img {
                 width: 100%;
-                max-width: 343px;
+                max-width: 338px;
                 height: auto;
                 object-fit: contain;
             }
@@ -99,7 +100,7 @@
 
         /* Topbar */
         .topbar {
-            background: linear-gradient(90deg, var(--color-primario) 0%, var(--color-secundario) 100%);
+            background: linear-gradient(90deg, var(--color-primario) 0%, var( --color-secundarioH) 100%);
             padding: 1.9rem 1rem;
             color: white;
             font-weight: bold;
@@ -266,7 +267,7 @@
 
         .anillo-activo {
             border-color: var(--estatus-activo);
-            box-shadow: 0 0 8px rgba(40, 167, 69, 0.6);
+            box-shadow: 0 0 8px rgba(41, 128, 185, 0.6); /* sombra azul institucional */
         }
 
         .anillo-inactivo {
