@@ -263,27 +263,44 @@
             const indicadorDivision = $('.indicador-division');
             const archivoImagen = $('#archivoImagen');
 
-            const divisionActualId = '@(Model.DivisionId.HasValue ? Model.DivisionId.ToString() : "")';
-            const usuarioId = '@Model.Id'; // ID del usuario que se está editando
-            const correoOriginal = '@Model.Correo'; // Correo original del usuario
+          const divisionActualId = '@(Model.DivisionId.HasValue ? Model.DivisionId.ToString() : "")';
+                const usuarioId = '@Model.Id';
+                const correoOriginal = '@Model.Correo';
 
-            // Variable para controlar si el correo es válido
-            let correoValido = true;
+                let correoValido = true;
 
-            // Verificación de correo en tiempo real
-            correoInput.on('blur', function () {
-                var correo = $(this).val().trim();
-                var feedback = $('#correo-feedback');
+                const regexCorreo = /^[^\s@@]+@@[^\s@@]+\.[^\s@@]+$/;
 
-                if (correo.length > 0) {
-                    // Si el correo no ha cambiado, no es necesario verificar
+                correoInput.on('blur', function () {
+                    const correo = $(this).val().trim();
+                    const feedback = $('#correo-feedback');
+
+                    // Si está vacío, limpiar feedback
+                    if (correo === "") {
+                        feedback.html('');
+                        feedback.removeClass('text-success text-warning text-danger text-muted');
+                        correoInput.removeClass('is-valid is-invalid');
+                        correoValido = false;
+                        return;
+                    }
+
+                    // Validación de formato
+                    if (!regexCorreo.test(correo)) {
+                        feedback.html('<i class="fas fa-info-circle text-danger"></i> Formato de correo inválido');
+                        feedback.addClass('text-danger').removeClass('text-success text-warning text-muted');
+                        correoValido = false;
+                        return;
+                    }
+
+                    // Si no ha cambiado, marcar como válido
                     if (correo === correoOriginal) {
                         feedback.html('<i class="fas fa-check-circle text-success"></i> Correo actual');
-                        feedback.addClass('text-success').removeClass('text-warning text-danger');
+                        feedback.addClass('text-success').removeClass('text-warning text-danger text-muted');
                         correoValido = true;
                         return;
                     }
 
+                    // Verificación en servidor
                     $.get('@Url.Action("VerificarCorreo")', {
                         correo: correo,
                         excludeId: usuarioId
@@ -293,16 +310,19 @@
                             feedback.html('<i class="fas fa-exclamation-triangle text-warning"></i> Ya existe un usuario con este correo');
                             feedback.addClass('text-warning').removeClass('text-success text-danger text-muted');
                             correoValido = false;
+                        } else {
+                            feedback.html('<i class="fas fa-check-circle text-success"></i> Correo disponible');
+                            feedback.addClass('text-success').removeClass('text-warning text-danger text-muted');
+                            correoValido = true;
                         }
                     })
-                    .fail(function (error) {
+                    .fail(function () {
                         feedback.html('<i class="fas fa-exclamation-circle text-danger"></i> Error al verificar correo');
                         feedback.addClass('text-danger').removeClass('text-success text-warning text-muted');
+                        correoInput.addClass('is-invalid').removeClass('is-valid');
                         correoValido = false;
                     });
-                } 
-            });
-
+                });
          
             // Función para eliminar espacios extras
             function limpiarEspacios(texto) {

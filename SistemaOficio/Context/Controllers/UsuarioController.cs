@@ -346,6 +346,7 @@ namespace OfiGest.Controllers
 
             return RedirectToAction("Index");
         }
+
         [HttpGet]
         public async Task<JsonResult> ObtenerDivisionesPorDepartamento(int departamentoId)
         {

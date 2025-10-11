@@ -7,12 +7,12 @@ namespace OfiGest.Models
         [Key]
         public int Id { get; set; }
         [Display(Name = "Nombre")]
-        [Required(ErrorMessage = "El nombre de la division es obligatorio.")]
+        [Required(ErrorMessage = "El nombre de la division es obligatorio")]
         [StringLength(100, ErrorMessage = "El nombre no debe exceder los 100 caracteres.")]
         public string Nombre { get; set; }
 
         [Display(Name = "Iniciales")]
-        [Required(ErrorMessage = "Las iniciales son obligatorias.")]
+        [Required(ErrorMessage = "Las iniciales son obligatorias")]
         [StringLength(10, ErrorMessage = "Las iniciales no pueden exceder los 10 caracteres.")]
         public string Iniciales { get; set; } = string.Empty;
 
