@@ -221,10 +221,7 @@
                     if (data.existe) {
                         feedback.html('<i class="fas fa-exclamation-triangle text-warning"></i> Ya existe un usuario con este correo');
                         feedback.addClass('text-warning').removeClass('text-success text-danger text-muted');
-                    } else {
-                        feedback.html('<i class="fas fa-check-circle text-success"></i> Correo disponible');
-                        feedback.addClass('text-success').removeClass('text-warning text-danger text-muted');
-                    }
+                    } 
                 })
                     .fail(function () {
                         feedback.html('<i class="fas fa-exclamation-circle text-danger"></i> Error al verificar correo');

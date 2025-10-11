@@ -310,10 +310,6 @@
                             feedback.html('<i class="fas fa-exclamation-triangle text-warning"></i> Ya existe un usuario con este correo');
                             feedback.addClass('text-warning').removeClass('text-success text-danger text-muted');
                             correoValido = false;
-                        } else {
-                            feedback.html('<i class="fas fa-check-circle text-success"></i> Correo disponible');
-                            feedback.addClass('text-success').removeClass('text-warning text-danger text-muted');
-                            correoValido = true;
                         }
                     })
                     .fail(function () {
