@@ -202,41 +202,48 @@
             const indicadorDivision = $('.indicador-division');
 
           // Verificación de correo con validación de formato
-        $('#Correo').on('blur', function () {
+          $('#Correo').on('blur', function () {
             var correo = $(this).val();
             var feedback = $('#correo-feedback');
-
-            // Expresión regular para validar formato de correo
+            var correoInput = $(this); // Asegura referencia al input
             var formatoValido = /^[^\s@@]+@@[^\s@@]+\.[^\s@@]+$/;
 
             if (correo.length === 0) {
                 feedback.html('');
                 feedback.removeClass('text-warning text-success text-danger text-muted');
+                correoInput.removeClass('is-valid is-invalid');
                 return;
             }
 
             if (!formatoValido.test(correo)) {
                 feedback.html('<i class="fas fa-info-circle text-danger"></i> Formato de correo inválido');
                 feedback.addClass('text-danger').removeClass('text-success text-warning text-muted');
+                correoValido = false;
                 return;
             }
 
-            // Si el formato es válido, verificar existencia en el servidor
             $.get('@Url.Action("VerificarCorreo")', { correo: correo })
                 .done(function (data) {
-                    if (data.existe) {
+                    if (!data.dominioValido) {
+                        feedback.html(`<i class="fas fa-ban text-danger"></i> ${data.mensaje}`);
+                        feedback.addClass('text-danger').removeClass('text-success text-warning text-muted');
+                        correoValido = false;
+                    } else if (data.existe) {
                         feedback.html('<i class="fas fa-exclamation-triangle text-warning"></i> Ya existe un usuario con este correo');
                         feedback.addClass('text-warning').removeClass('text-success text-danger text-muted');
-                    } 
-                })
-                    .fail(function () {
-                        feedback.html('<i class="fas fa-exclamation-circle text-danger"></i> Error al verificar correo');
-                        feedback.addClass('text-danger').removeClass('text-success text-warning text-muted');
-                        correoInput.addClass('is-invalid').removeClass('is-valid');
                         correoValido = false;
-                    });
+                    } else {
+                        feedback.html('<i class="fas fa-check-circle text-success"></i> Correo disponible');
+                        feedback.addClass('text-success').removeClass('text-warning text-danger text-muted');
+                        correoValido = true;
+                    }
+                })
+                .fail(function () {
+                    feedback.html('<i class="fas fa-exclamation-circle text-danger"></i> Error al verificar correo');
+                    feedback.addClass('text-danger').removeClass('text-success text-warning text-muted');
+                    correoValido = false;
+                });
         });
-
             // Función para eliminar espacios extras
             function limpiarEspacios(texto) {
                 return texto.replace(/\s+/g, ' ').trim();

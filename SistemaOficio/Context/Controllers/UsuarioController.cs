@@ -429,19 +429,47 @@ namespace OfiGest.Controllers
             }
         }
 
-  
+
         [HttpGet]
         public async Task<JsonResult> VerificarCorreo(string correo, int excludeId = 0)
         {
             try
             {
+                // Primero validar el dominio
+                var dominiosPermitidos = Environment.GetEnvironmentVariable("SeguridadCorreo_DominiosPermitidos")?.Split(',');
+                if (dominiosPermitidos != null && dominiosPermitidos.Any())
+                {
+                    bool dominioValido = dominiosPermitidos.Any(d =>
+                        correo.EndsWith(d, StringComparison.OrdinalIgnoreCase));
+
+                    if (!dominioValido)
+                    {
+                        return Json(new
+                        {
+                            existe = false,
+                            dominioValido = false,
+                            mensaje = $"El correo debe terminar en: {string.Join(", ", dominiosPermitidos)}"
+                        });
+                    }
+                }
+
+                // Luego verificar si existe
                 var existe = await _usuarioManager.CorreoExistsAsync(correo, excludeId);
-                return Json(new { existe = existe });
+                return Json(new
+                {
+                    existe = existe,
+                    dominioValido = true
+                });
             }
             catch (Exception ex)
             {
                 // Log the exception
-                return Json(new { existe = false });
+                return Json(new
+                {
+                    existe = false,
+                    dominioValido = false,
+                    error = "Error al verificar correo"
+                });
             }
         }
     }
