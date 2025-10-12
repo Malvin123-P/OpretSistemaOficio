@@ -319,9 +319,9 @@
         let contenidoOriginal = '';
         let enviandoFormulario = false;
 
-        // Función para eliminar espacios extras
-        function limpiarEspacios(texto) {
-            return texto.replace(/\s+/g, ' ').trim(); // Reemplaza múltiples espacios por uno solo y elimina espacios al inicio/final
+        // Función para eliminar solo espacios al principio
+        function limpiarEspaciosInicio(texto) {
+            return texto.replace(/^\s+/, ''); // Solo elimina espacios al inicio
         }
 
         function verificarSoporteSpellcheck() {
@@ -487,33 +487,14 @@
             const viaInput = $('[name="Via"]');
             const anexosInput = $('[name="Anexos"]');
 
-            // Limpiar espacios en el input de Via
-            viaInput.on("input", function () {
-                let valor = $(this).val();
-                let valorLimpio = limpiarEspacios(valor);
-
-                if (valor !== valorLimpio) {
-                    $(this).val(valorLimpio);
-                }
-            });
-
+            // Limpiar espacios al principio en el input de Via (solo en blur)
             viaInput.on("blur", function () {
-                $(this).val(limpiarEspacios($(this).val()));
+                $(this).val(limpiarEspaciosInicio($(this).val()));
             });
 
-            // Limpiar espacios en el input de Anexos
-            anexosInput.on("input", function () {
-                let valor = $(this).val();
-                // Para URLs, eliminar todos los espacios
-                let valorLimpio = valor.replace(/\s+/g, '').trim();
-
-                if (valor !== valorLimpio) {
-                    $(this).val(valorLimpio);
-                }
-            });
-
+            // Limpiar espacios al principio en el input de Anexos (solo en blur)
             anexosInput.on("blur", function () {
-                $(this).val($(this).val().replace(/\s+/g, '').trim());
+                $(this).val(limpiarEspaciosInicio($(this).val()));
             });
 
             // Función para obtener contenido de Summernote
@@ -530,9 +511,9 @@
 
                 e.preventDefault();
 
-                // Limpiar espacios finales antes de enviar
-                viaInput.val(limpiarEspacios(viaInput.val()));
-                anexosInput.val(anexosInput.val().replace(/\s+/g, '').trim());
+                // Limpiar espacios al principio antes de enviar
+                viaInput.val(limpiarEspaciosInicio(viaInput.val()));
+                anexosInput.val(limpiarEspaciosInicio(anexosInput.val()));
 
                 // Actualizar campo oculto con contenido actual
                 const contenidoActual = getSummernoteContent();

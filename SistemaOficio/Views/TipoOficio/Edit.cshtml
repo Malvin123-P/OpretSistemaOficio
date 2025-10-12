@@ -54,14 +54,14 @@
                 <div class="col-md-6 mb-3">
                     <label asp-for="Nombre" class="form-label">@Html.DisplayNameFor(m => m.Nombre)</label>
                     <span class="text-danger" title="Campo obligatorio">*</span>
-                    <input asp-for="Nombre" class="form-control" id="nombreInput" />
+                    <input asp-for="Nombre" class="form-control" maxlength="100" placeholder="Ej: Oficio de solicitud de materiales" id="nombreInput" />
                     <span asp-validation-for="Nombre" class="text-danger d-none"></span>
                 </div>
 
                 <div class="col-md-6 mb-3">
                     <label asp-for="Iniciales" class="form-label">@Html.DisplayNameFor(m => m.Iniciales)<small class="text-muted">(Puede editarse)</small></label>
                     <span class="text-danger" title="Campo obligatorio">*</span>
-                    <input asp-for="Iniciales" class="form-control" id="codigoCorto" maxlength="20" placeholder="Se genera automáticamente" />
+                    <input asp-for="Iniciales" class="form-control" id="codigoCorto" maxlength="20" placeholder="Ej: OFI-MAT, se sugiere automáticamente" />
                     <span asp-validation-for="Iniciales" class="text-danger d-none"></span>
                 </div>
             </div>
@@ -69,7 +69,7 @@
             <div class="mb-3">
                 <label asp-for="Descripcion" class="form-label">@Html.DisplayNameFor(m => m.Descripcion)</label>
                 <span class="text-muted">(Opcional)</span>
-                <textarea asp-for="Descripcion" maxlength="500" class="form-control" placeholder="Escribe una descripción si lo deseas..."></textarea>
+                <textarea asp-for="Descripcion" maxlength="500" class="form-control" placeholder="Ej: Oficio utilizado para solicitar materiales o insumos requeridos por el área correspondiente..."></textarea>
                 <span asp-validation-for="Descripcion" class="text-danger d-none"></span>
                 <div id="contadorDescripcion" class="mt-2 text-muted text-end"></div>
             </div>
@@ -124,9 +124,9 @@
             const inicialesInput = $('[name="Iniciales"]');
             const descripcionInput = $('[name="Descripcion"]');
 
-            // Función para eliminar espacios extras
-            function limpiarEspacios(texto) {
-                return texto.replace(/\s+/g, ' ').trim(); // Reemplaza múltiples espacios por uno solo y elimina espacios al inicio/final
+            // Función para eliminar solo espacios al principio
+            function limpiarEspaciosInicio(texto) {
+                return texto.replace(/^\s+/, ''); // Solo elimina espacios al inicio
             }
 
             // Función para determinar el prefijo basado en el nombre
@@ -144,17 +144,15 @@
                 return palabras.map(p => p.charAt(0).toUpperCase()).join("");
             }
 
-            // Limpiar espacios en el input de Nombre
+            // Limpiar espacios al principio en el input de Nombre (solo en blur)
+            nombreInput.on("blur", function () {
+                $(this).val(limpiarEspaciosInicio($(this).val()));
+            });
+
+            // Generar iniciales automáticamente (sin limpiar espacios internos durante escritura)
             nombreInput.on("input", function () {
                 let valor = $(this).val();
-                let valorLimpio = limpiarEspacios(valor);
-
-                // Solo actualizar si hay cambios para evitar problemas con el cursor
-                if (valor !== valorLimpio) {
-                    $(this).val(valorLimpio);
-                }
-
-                const nombreActual = valorLimpio;
+                const nombreActual = valor;
 
                 if (nombreActual) {
                     const generadas = generarIniciales(nombreActual);
@@ -170,21 +168,17 @@
                     const combinadas = prefijo + generadas + contenidoUsuario.replace(generadas, '');
                     inicialesInput.val(combinadas);
                 } else {
-                    // Si no hay nombre, usar prefijo por defecto (OFI-)
-                    const valorActual = inicialesInput.val().toUpperCase();
-                    if (!valorActual.startsWith("OFI-") && !valorActual.startsWith("CERT-")) {
-                        inicialesInput.val("OFI-" + valorActual);
-                    }
+                    // Si no hay nombre, LIMPIAR las iniciales también
+                    inicialesInput.val('');
                 }
             });
 
-            // Limpiar espacios en el input de Iniciales
+            // Convertir iniciales a mayúsculas (sin eliminar espacios internos durante escritura)
             inicialesInput.on("input", function () {
                 let valor = $(this).val();
-                // Para iniciales, eliminar todos los espacios
-                let valorLimpio = valor.replace(/\s+/g, '').toUpperCase();
+                let valorLimpio = valor.toUpperCase();
 
-                const nombreActual = nombreInput.val().trim();
+                const nombreActual = nombreInput.val();
                 const prefijo = nombreActual ? obtenerPrefijo(nombreActual) : 'OFI-';
 
                 // Asegurar que siempre empiece con el prefijo correcto
@@ -199,16 +193,12 @@
                 }
             });
 
-            // También limpiar espacios cuando el usuario pierde el foco (evento blur)
-            nombreInput.on("blur", function () {
-                $(this).val(limpiarEspacios($(this).val()));
-            });
-
+            // Limpiar espacios al principio en el input de Iniciales (solo en blur)
             inicialesInput.on("blur", function () {
                 let valor = $(this).val();
-                let valorLimpio = valor.replace(/\s+/g, '').toUpperCase();
+                let valorLimpio = limpiarEspaciosInicio(valor).toUpperCase();
 
-                const nombreActual = nombreInput.val().trim();
+                const nombreActual = nombreInput.val();
                 const prefijo = nombreActual ? obtenerPrefijo(nombreActual) : 'OFI-';
 
                 if (!valorLimpio.startsWith(prefijo)) {
@@ -219,24 +209,26 @@
                 $(this).val(valorLimpio);
             });
 
-            // Limpiar espacios en el textarea de Descripción
-            descripcionInput.on("input", function () {
-                let valor = $(this).val();
-                // Para descripción, solo limpiamos espacios extras pero mantenemos saltos de línea
-                let valorLimpio = valor.replace(/[ ]+/g, ' '); // Solo espacios múltiples, no afecta saltos de línea
-
-                if (valor !== valorLimpio) {
-                    $(this).val(valorLimpio);
-                }
-            });
-
+            // Limpiar espacios al principio en el textarea de Descripción (solo en blur)
             descripcionInput.on("blur", function () {
-                let valor = $(this).val();
-                $(this).val(valor.replace(/[ ]+/g, ' ').trim());
+                $(this).val(limpiarEspaciosInicio($(this).val()));
             });
 
-            // Inicializar el campo de iniciales con el prefijo correcto si es necesario
-            if (inicialesInput.val().trim()) {
+            // Inicializar el campo de iniciales solo si tiene nombre y está vacío
+            if (!inicialesInput.val().trim()) {
+                const nombreActual = nombreInput.val().trim();
+                if (nombreActual) {
+                    const prefijo = obtenerPrefijo(nombreActual);
+                    inicialesInput.val(prefijo);
+                }
+            } else {
+                // Si el usuario lo dejó vacío manualmente, respetar esa decisión
+                if (inicialesInput.val().trim() === '') {
+                    inicialesInput.val('');
+                    return;
+                }
+
+                // Asegurar que el valor existente tenga el formato correcto
                 let valorActual = inicialesInput.val().toUpperCase();
                 const nombreActual = nombreInput.val().trim();
                 const prefijo = nombreActual ? obtenerPrefijo(nombreActual) : 'OFI-';
@@ -289,11 +281,11 @@
             $('#editForm').on('submit', function (e) {
                 e.preventDefault();
 
-                // Limpiar espacios finales antes de enviar
-                nombreInput.val(limpiarEspacios(nombreInput.val()));
+                // Limpiar espacios al principio antes de enviar
+                nombreInput.val(limpiarEspaciosInicio(nombreInput.val()));
 
-                let inicialesLimpio = inicialesInput.val().replace(/\s+/g, '').toUpperCase();
-                const nombreActual = nombreInput.val().trim();
+                let inicialesLimpio = limpiarEspaciosInicio(inicialesInput.val()).toUpperCase();
+                const nombreActual = nombreInput.val();
                 const prefijo = nombreActual ? obtenerPrefijo(nombreActual) : 'OFI-';
 
                 if (!inicialesLimpio.startsWith(prefijo)) {
@@ -302,7 +294,7 @@
                 }
                 inicialesInput.val(inicialesLimpio);
 
-                descripcionInput.val(limpiarEspacios(descripcionInput.val()));
+                descripcionInput.val(limpiarEspaciosInicio(descripcionInput.val()));
 
                 const nombreActualizado = nombreInput.val();
                 const inicialesActualizadas = inicialesInput.val();

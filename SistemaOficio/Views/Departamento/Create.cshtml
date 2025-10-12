@@ -58,21 +58,21 @@
                 <div class="col-md-6 mb-3">
                     <label asp-for="Nombre" class="form-label">@Html.DisplayNameFor(m => m.Nombre)</label>
                     <span class="text-danger" title="Campo obligatorio">*</span>
-                    <input asp-for="Nombre" class="form-control" placeholder="Departamento de Recursos Humanos" maxlength="100" />
+                    <input asp-for="Nombre" class="form-control" maxlength="100" placeholder="Ej: Recursos Humanos" />
                     <span asp-validation-for="Nombre" class="text-danger d-none"></span>
                 </div>
 
                 <div class="col-md-6 mb-3">
                     <label asp-for="Iniciales" class="form-label">@Html.DisplayNameFor(m => m.Iniciales)<small class="text-muted">(Puede editarse)</small></label>
                     <span class="text-danger" title="Campo obligatorio">*</span>
-                    <input asp-for="Iniciales" class="form-control" id="codigoCorto" maxlength="20" placeholder="Se genera automáticamente" />
+                    <input asp-for="Iniciales" class="form-control" id="codigoCorto" maxlength="20" placeholder="Ej: RH, se sugiere automáticamente" />
                     <span asp-validation-for="Iniciales" class="text-danger d-none"></span>
                 </div>
             </div>
 
             <div class="mb-3">
                 <label asp-for="Descripcion" class="form-label">@Html.DisplayNameFor(m => m.Descripcion)<span class="text-muted">(Opcional)</span></label>
-                <textarea asp-for="Descripcion" maxlength="500" class="form-control" placeholder="Escribe una descripción si lo deseas..."></textarea>
+                <textarea asp-for="Descripcion" maxlength="500" class="form-control" placeholder="Ej: Departamento encargado de gestionar procesos humanos, nómina y bienestar institucional..."></textarea>
                 <span asp-validation-for="Descripcion" class="text-danger d-none"></span>
                 <div id="contadorDescripcion" class="mt-2 text-muted text-end"></div>
             </div>
@@ -97,7 +97,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/css/bootstrap-select.min.css">
 
     <script>
-              $(document).ready(function () {
+        $(document).ready(function () {
             $('form').attr('novalidate', 'novalidate');
             $('.selectpicker').selectpicker();
 
@@ -118,26 +118,25 @@
             const descripcionInput = $('[name="Descripcion"]');
             const contador = $('#contadorDescripcion');
 
-            // Función para eliminar espacios extras
-            function limpiarEspacios(texto) {
-                return texto.replace(/\s+/g, ' ').trim(); // Reemplaza múltiples espacios por uno solo y elimina espacios al inicio/final
+            // Función para eliminar solo espacios al principio
+            function limpiarEspaciosInicio(texto) {
+                return texto.replace(/^\s+/, ''); // Solo elimina espacios al inicio
             }
 
-            // Limpiar espacios en el input de Nombre
+            // Limpiar espacios al principio en el input de Nombre
+            nombreInput.on("blur", function () {
+                $(this).val(limpiarEspaciosInicio($(this).val()));
+            });
+
+            // Generar iniciales automáticamente (sin limpiar espacios internos durante escritura)
             nombreInput.on("input", function () {
                 let valor = $(this).val();
-                let valorLimpio = limpiarEspacios(valor);
 
-                // Solo actualizar si hay cambios para evitar problemas con el cursor
-                if (valor !== valorLimpio) {
-                    $(this).val(valorLimpio);
-                }
-
-                // Generar iniciales automáticamente
-                const palabras = valorLimpio.split(/\s+/);
+                // Generar iniciales automáticamente usando trim() solo para el split
+                const palabras = valor.trim().split(/\s+/);
                 const generadas = palabras.map(p => p.charAt(0).toUpperCase()).join("");
 
-                const manual = inicialesInput.val().trim().toUpperCase();
+                const manual = inicialesInput.val();
                 const combinadas = manual.length > 0 && !manual.startsWith(generadas)
                     ? generadas + manual
                     : generadas;
@@ -145,42 +144,20 @@
                 inicialesInput.val(combinadas);
             });
 
-            // Limpiar espacios en el input de Iniciales
+            // Convertir iniciales a mayúsculas (sin eliminar espacios internos)
             inicialesInput.on("input", function () {
                 let valor = $(this).val();
-                // Para iniciales, eliminar todos los espacios
-                let valorLimpio = valor.replace(/\s+/g, '').toUpperCase();
-
-                if (valor !== valorLimpio) {
-                    $(this).val(valorLimpio);
-                }
+                $(this).val(valor.toUpperCase());
             });
 
-            // Limpiar espacios en el textarea de Descripción
-            descripcionInput.on("input", function () {
-                let valor = $(this).val();
-                let valorLimpio = limpiarEspacios(valor);
-
-                // Para descripción, solo limpiamos espacios extras pero mantenemos saltos de línea
-                valorLimpio = valor.replace(/[ ]+/g, ' '); // Solo espacios múltiples, no afecta saltos de línea
-
-                if (valor !== valorLimpio) {
-                    $(this).val(valorLimpio);
-                }
-            });
-
-            // También limpiar espacios cuando el usuario pierde el foco (evento blur)
-            nombreInput.on("blur", function () {
-                $(this).val(limpiarEspacios($(this).val()));
-            });
-
+            // Limpiar espacios al principio en el input de Iniciales
             inicialesInput.on("blur", function () {
-                $(this).val($(this).val().replace(/\s+/g, '').toUpperCase());
+                $(this).val(limpiarEspaciosInicio($(this).val()));
             });
 
+            // Limpiar espacios al principio en el textarea de Descripción
             descripcionInput.on("blur", function () {
-                let valor = $(this).val();
-                $(this).val(valor.replace(/[ ]+/g, ' ').trim());
+                $(this).val(limpiarEspaciosInicio($(this).val()));
             });
 
             // Contador de caracteres para descripción
@@ -223,10 +200,10 @@
             $('#createForm').on('submit', function (e) {
                 e.preventDefault();
 
-                // Limpiar espacios finales antes de enviar
-                nombreInput.val(limpiarEspacios(nombreInput.val()));
-                inicialesInput.val(inicialesInput.val().replace(/\s+/g, '').toUpperCase());
-                descripcionInput.val(limpiarEspacios(descripcionInput.val()));
+                // Limpiar espacios al principio antes de enviar
+                nombreInput.val(limpiarEspaciosInicio(nombreInput.val()));
+                inicialesInput.val(limpiarEspaciosInicio(inicialesInput.val()).toUpperCase());
+                descripcionInput.val(limpiarEspaciosInicio(descripcionInput.val()));
 
                 const nombreActual = nombreInput.val();
                 const inicialesActuales = inicialesInput.val();

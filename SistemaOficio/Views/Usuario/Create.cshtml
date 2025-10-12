@@ -72,25 +72,24 @@
                 <div class="col-md-6 mb-3">
                     <label asp-for="Nombre" class="form-label">@Html.DisplayNameFor(m => m.Nombre)</label>
                     <span class="text-danger" title="Campo obligatorio">*</span>
-                    <input asp-for="Nombre" class="form-control" maxlength="100" placeholder="Mario" id="correoInput" />
+                    <input asp-for="Nombre" class="form-control" maxlength="100" placeholder="Ej: Mario" id="correoInput" />
                     <span asp-validation-for="Nombre" class="text-danger d-none"></span>
                 </div>
 
                 <div class="col-md-6 mb-3">
                     <label asp-for="Apellido" class="form-label">@Html.DisplayNameFor(m => m.Apellido)</label>
                     <span class="text-danger" title="Campo obligatorio">*</span>
-                    <input asp-for="Apellido" class="form-control" maxlength="100" placeholder="Ramirez Moreta"/>
+                    <input asp-for="Apellido" class="form-control" maxlength="100" placeholder="Ej: Ramírez Moreta" />
                     <span asp-validation-for="Apellido" class="text-danger d-none"></span>
                 </div>
 
                 <div class="col-md-6 mb-3">
                     <label asp-for="Correo" class="form-label">@Html.DisplayNameFor(m => m.Correo)</label>
                     <span class="text-danger" title="Campo obligatorio">*</span>
-                    <input asp-for="Correo" class="form-control" maxlength="150" placeholder="Mario@opret.gob.do" id="Correo"/>
+                    <input asp-for="Correo" class="form-control" maxlength="150" placeholder="Ej: mario@opret.gob.do" id="Correo" />
                     <span asp-validation-for="Correo" class="text-danger d-none"></span>
                     <small id="correo-feedback" class="form-text text-muted mt-1"></small>
                 </div>
-
 
                 <div class="col-md-6 mb-3">
                     <label asp-for="DepartamentoId" class="form-label">@Html.DisplayNameFor(m => m.DepartamentoId)</label>
@@ -101,7 +100,7 @@
                             data-live-search="true"
                             data-size="5"
                             id="DepartamentoId">
-                        <option value="">Seleccione un departamento</option>
+                        <option value="">Seleccione el departamento al que pertenece</option>
                     </select>
                     <span asp-validation-for="DepartamentoId" class="text-danger d-none"></span>
                 </div>
@@ -115,7 +114,7 @@
                             data-live-search="true"
                             data-size="5"
                             id="DivisionId">
-                        <option value="">Seleccione una división</option>
+                        <option value="">Seleccione la división correspondiente</option>
                     </select>
                     <span asp-validation-for="DivisionId" class="text-danger d-none"></span>
                 </div>
@@ -129,11 +128,10 @@
                             data-live-search="true"
                             data-size="5"
                             id="RolId">
-                        <option value="">Seleccione un rol</option>
+                        <option value="">Seleccione el rol que desempeñará</option>
                     </select>
                     <span asp-validation-for="RolId" class="text-danger d-none"></span>
                 </div>
-
 
                 <div class="col-md-6 mb-3">
                     <div class="form-check form-switch">

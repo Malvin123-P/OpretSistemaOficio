@@ -125,7 +125,7 @@
         <h4 class="mt-3 mb-3">Editar Usuarios</h4>
         <div class="card shadow-sm border-0 p-6 card-adjusted">
 
-          
+
             <div class="row">
 
                 <div class="col-md-6 mb-3">
@@ -151,19 +151,19 @@
                 <div class="col-md-6 mb-3">
                     <label asp-for="Nombre" class="form-label">@Html.DisplayNameFor(m => m.Nombre)</label>
                     <span class="text-danger" title="Campo obligatorio">*</span>
-                    <input asp-for="Nombre" class="form-control" maxlength="100" placeholder="Mario" required aria-required="true" />
+                    <input asp-for="Nombre" class="form-control" maxlength="100" placeholder="Ej: Mario" required aria-required="true" />
                 </div>
 
                 <div class="col-md-6 mb-3">
                     <label asp-for="Apellido" class="form-label">@Html.DisplayNameFor(m => m.Apellido)</label>
                     <span class="text-danger" title="Campo obligatorio">*</span>
-                    <input asp-for="Apellido" class="form-control" maxlength="100" placeholder="Ramirez Moreta" required aria-required="true" />
+                    <input asp-for="Apellido" class="form-control" maxlength="100" placeholder="Ej: Ramírez Moreta" required aria-required="true" />
                 </div>
 
                 <div class="col-md-6 mb-3">
                     <label asp-for="Correo" class="form-label">@Html.DisplayNameFor(m => m.Correo)</label>
                     <span class="text-danger" title="Campo obligatorio">*</span>
-                    <input asp-for="Correo" class="form-control" maxlength="150" placeholder="Mario@opret.gob.do" id="Correo" required aria-required="true" />
+                    <input asp-for="Correo" class="form-control" maxlength="150" placeholder="Ej: mario@opret.gob.do" id="Correo" required aria-required="true" />
                     <small id="correo-feedback" class="form-text text-muted mt-1"></small>
                 </div>
 
@@ -171,7 +171,7 @@
                     <label asp-for="DepartamentoId" class="form-label">@Html.DisplayNameFor(m => m.DepartamentoId)</label>
                     <span class="text-danger" title="Campo obligatorio">*</span>
                     <select asp-for="DepartamentoId" asp-items="ViewBag.Departamentos" class="form-control selectpicker" data-live-search="true" data-size="5" id="DepartamentoId" required aria-required="true">
-                        <option value="">Seleccione un departamento</option>
+                        <option value="">Seleccione el departamento al que pertenece</option>
                     </select>
                 </div>
 
@@ -179,7 +179,7 @@
                     <label asp-for="RolId" class="form-label">@Html.DisplayNameFor(m => m.RolId)</label>
                     <span class="text-danger" title="Campo obligatorio">*</span>
                     <select asp-for="RolId" asp-items="ViewBag.Roles" class="form-control selectpicker" data-live-search="true" data-size="5" id="RolId" required aria-required="true">
-                        <option value="">Seleccione un rol</option>
+                        <option value="">Seleccione el rol que desempeña</option>
                     </select>
                 </div>
 
@@ -187,10 +187,9 @@
                     <label asp-for="DivisionId" class="form-label">@Html.DisplayNameFor(m => m.DivisionId)</label>
                     <span class="text-danger indicador-division" title="Campo obligatorio">*</span>
                     <select asp-for="DivisionId" asp-items="ViewBag.Divisiones" class="form-control selectpicker" data-live-search="true" data-size="5" id="DivisionId">
-                        <option value="">Seleccione una división</option>
+                        <option value="">Seleccione la división correspondiente</option>
                     </select>
                 </div>
-
 
                 <div class="col-md-6 mb-3">
                     <label asp-for="Activo" class="form-label">Estado del Usuario</label>
@@ -212,6 +211,7 @@
                     </div>
                 </div>
             </div>
+
 
             <div class="mt-auto">
                 <button type="submit" class="btn btn-azul d-flex justify-content-center align-items-center gap-2 w-100">
