@@ -158,6 +158,11 @@
         background: #fff3cd;
         border-left: 4px solid #ffc107;
     }
+
+    .form-label {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
 </style>
 
 <form asp-action="Create" method="post" autocomplete="off" id="formCreate">
@@ -166,66 +171,83 @@
 
         <h4 class="mt-3 mb-3">Crear Oficio</h4>
         <div class="card shadow-sm border-0 p-4 card-adjusted">
+
             <div class="row mb-3">
+                <!-- Tipo de Oficio -->
                 <div class="col-md-4">
                     <label asp-for="TipoOficioId" class="form-label">@Html.DisplayNameFor(m => m.TipoOficioId)</label>
                     <span class="text-danger" title="Campo obligatorio">*</span>
-                    <select asp-for="TipoOficioId"
-                            asp-items="ViewBag.TiposOficio"
-                            class="form-control selectpicker"
-                            data-live-search="true"
-                            data-size="5"
-                            required>
-                        <option value="">Seleccione un tipo de oficio</option>
-                    </select>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-file-earmark-text"></i></span>
+                        <select asp-for="TipoOficioId"
+                                asp-items="ViewBag.TiposOficio"
+                                class="form-control selectpicker"
+                                data-live-search="true"
+                                data-size="5"
+                                required>
+                            <option value="">Seleccione un tipo de oficio</option>
+                        </select>
+                    </div>
                     <span asp-validation-for="TipoOficioId" class="text-danger d-none"></span>
                 </div>
 
+                <!-- Vía -->
                 <div class="col-md-4">
                     <label asp-for="Via" class="form-label">@Html.DisplayNameFor(m => m.Via)</label>
-                    <input asp-for="Via" class="form-control" placeholder="Ej: Por conducto del Director" maxlength="100" />
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-arrow-right-square"></i></span>
+                        <input asp-for="Via" class="form-control" placeholder="Ej: Por conducto del Director" maxlength="100" />
+                    </div>
                     <span asp-validation-for="Via" class="text-danger d-none"></span>
                 </div>
 
+                <!-- Dirigido a Departamento -->
                 <div class="col-md-4">
                     <label asp-for="DirigidoDepartamento" class="form-label">@Html.DisplayNameFor(m => m.DirigidoDepartamento)</label>
                     <span class="text-danger" title="Campo obligatorio">*</span>
-                    <select asp-for="DirigidoDepartamento"
-                            asp-items="ViewBag.Departamentos"
-                            class="form-control selectpicker"
-                            data-live-search="true"
-                            data-size="5"
-                            required>
-                        <option value="">Seleccione un departamento</option>
-                    </select>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-building"></i></span>
+                        <select asp-for="DirigidoDepartamento"
+                                asp-items="ViewBag.Departamentos"
+                                class="form-control selectpicker"
+                                data-live-search="true"
+                                data-size="5"
+                                required>
+                            <option value="">Seleccione un departamento</option>
+                        </select>
+                    </div>
                     <span asp-validation-for="DirigidoDepartamento" class="text-danger d-none"></span>
                 </div>
             </div>
 
+            <!-- Anexos -->
             <div class="row mb-3">
                 <div class="col-md-12">
                     <label asp-for="Anexos" class="form-label">@Html.DisplayNameFor(m => m.Anexos)</label>
-                    <input asp-for="Anexos" type="url" class="form-control" placeholder="Ej: https://documentos.opret.gob.do/informe123.pdf" maxlength="500" />
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-link-45deg"></i></span>
+                        <input asp-for="Anexos" type="url" class="form-control" placeholder="Ej: https://documentos.opret.gob.do/informe123.pdf" maxlength="500" />
+                    </div>
                     <span asp-validation-for="Anexos" class="text-danger d-none"></span>
                 </div>
             </div>
 
+            <!-- Contenido -->
             <div class="row mb-3">
                 <div class="col-md-12">
                     <label asp-for="Contenido" class="form-label">@Html.DisplayNameFor(m => m.Contenido)</label>
                     <span class="text-danger" title="Campo obligatorio">*</span>
-
                     <input type="hidden" asp-for="Contenido" />
                     <div class="editor-wrapper">
                         <div class="summernote-container">
                             <div id="summernote"></div>
                         </div>
                     </div>
-
                     <span asp-validation-for="Contenido" class="text-danger d-none"></span>
                 </div>
             </div>
 
+            <!-- Generar PDF -->
             <div class="col-md-6 mb-1">
                 <div class="form-check form-switch">
                     <input class="form-check-input" type="checkbox" id="Descargar" name="Descargar" value="true" checked />
@@ -238,6 +260,7 @@
                 </div>
             </div>
 
+            <!-- Botón de envío -->
             <div class="mt-auto">
                 <button type="submit" class="btn btn-azul d-flex justify-content-center align-items-center gap-2 w-100" id="btnSubmit">
                     GENERAR OFICIO

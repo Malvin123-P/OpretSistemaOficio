@@ -116,36 +116,54 @@
     <div class="card shadow-sm border-0 p-4 card-adjusted">
 
         <div class="d-flex flex-wrap gap-3 align-items-end mb-3">
-            <div class="flex-grow-1">
-                <label class="form-label">Departamento destino</label>
-                <select id="filtroDepartamento" asp-items="ViewBag.Departamentos" class="form-control selectpicker" data-size="5" data-live-search="true" title="Filtro de búsqueda">
-                    <option value="">Todos</option>
-                </select>
-            </div>
+      
+                <!-- Departamento destino -->
+                <div class="flex-grow-1">
+                    <label class="form-label">Departamento destino</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-building"></i></span>
+                        <select id="filtroDepartamento" asp-items="ViewBag.Departamentos" class="form-control selectpicker" data-size="5" data-live-search="true" title="Filtro de búsqueda">
+                            <option value="">Todos</option>
+                        </select>
+                    </div>
+                </div>
+
 
             <div class="flex-grow-1">
                 <label class="form-label">Usuario</label>
-                <select id="filtroUsuario" asp-items="ViewBag.UsuariosFiltro" class="form-control selectpicker" data-size="5" data-live-search="true" title="Filtro de búsqueda">
-                    <option value="">Todos</option>
-                </select>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-person-fill"></i></span>
+                    <select id="filtroUsuario" asp-items="ViewBag.UsuariosFiltro" class="form-control selectpicker" data-size="5" data-live-search="true" title="Filtro de búsqueda">
+                        <option value="">Todos</option>
+                    </select>
+                </div>
+
             </div>
 
             <div class="flex-grow-1">
                 <label class="form-label">Asunto</label>
-                <select id="filtroTipoOficio" asp-items="ViewBag.TiposOficio" class="form-control selectpicker" data-size="5" data-live-search="true" title="Filtro de búsqueda">
-                    <option value="">Todos</option>
-                </select>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-journal-text"></i></span>
+                    <select id="filtroTipoOficio" asp-items="ViewBag.TiposOficio" class="form-control selectpicker" data-size="5" data-live-search="true" title="Filtro de búsqueda">
+                        <option value="">Todos</option>
+                    </select>
+                </div>
+
             </div>
 
             @if (rolUsuario == "Administrador")
             {
                 <div class="flex-grow-1">
                     <label class="form-label">Estado</label>
-                    <select id="filtroEstado" class="form-control selectpicker">
-                        <option value="">Todos</option>
-                        <option value="activo">Solo activos</option>
-                        <option value="deshabilitado">Solo inactivos</option>
-                    </select>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-toggle-on"></i></span>
+                        <select id="filtroEstado" class="form-control selectpicker">
+                            <option value="">Todos</option>
+                            <option value="activo">Solo activos</option>
+                            <option value="deshabilitado">Solo inactivos</option>
+                        </select>
+                    </div>
+
                 </div>
             }
 

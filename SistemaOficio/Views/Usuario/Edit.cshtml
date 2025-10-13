@@ -114,8 +114,12 @@
             color: #fff;
             outline: none;
         }
-</style>
 
+    .form-label {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+</style>
 <form asp-action="Edit" method="post" autocomplete="off" id="editForm" enctype="multipart/form-data">
     <div class="container-fluid d-flex flex-column compact-container">
         <input type="hidden" asp-for="Id" />
@@ -124,14 +128,15 @@
         @Html.AntiForgeryToken()
         <h4 class="mt-3 mb-3">Editar Usuarios</h4>
         <div class="card shadow-sm border-0 p-6 card-adjusted">
-
-
             <div class="row">
 
+                <!-- Imagen de perfil -->
                 <div class="col-md-6 mb-3">
                     <label asp-for="ArchivoImagen" class="form-label">Subir nueva Imagen de Perfil</label>
-                    <input asp-for="ArchivoImagen" type="file" class="form-control"
-                           accept=".jpg,.jpeg,.png,.gif" id="archivoImagen" />
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-image-fill"></i></span>
+                        <input asp-for="ArchivoImagen" type="file" class="form-control" accept=".jpg,.jpeg,.png,.gif" id="archivoImagen" />
+                    </div>
                     <small class="form-text text-muted">Formatos permitidos: JPG, JPEG, PNG, GIF. Máximo 2MB.</small>
                     <span asp-validation-for="ArchivoImagen" class="text-danger"></span>
 
@@ -148,62 +153,93 @@
                     }
                 </div>
 
+                <!-- Nombre -->
                 <div class="col-md-6 mb-3">
                     <label asp-for="Nombre" class="form-label">@Html.DisplayNameFor(m => m.Nombre)</label>
                     <span class="text-danger" title="Campo obligatorio">*</span>
-                    <input asp-for="Nombre" class="form-control" maxlength="100" placeholder="Ej: Mario" required aria-required="true" />
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-person-fill"></i></span>
+                        <input asp-for="Nombre" class="form-control" maxlength="100" placeholder="Ej: Mario" required aria-required="true" />
+                    </div>
                 </div>
 
+                <!-- Apellido -->
                 <div class="col-md-6 mb-3">
                     <label asp-for="Apellido" class="form-label">@Html.DisplayNameFor(m => m.Apellido)</label>
                     <span class="text-danger" title="Campo obligatorio">*</span>
-                    <input asp-for="Apellido" class="form-control" maxlength="100" placeholder="Ej: Ramírez Moreta" required aria-required="true" />
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-person-lines-fill"></i></span>
+                        <input asp-for="Apellido" class="form-control" maxlength="100" placeholder="Ej: Ramírez Moreta" required aria-required="true" />
+                    </div>
                 </div>
 
+                <!-- Correo -->
                 <div class="col-md-6 mb-3">
                     <label asp-for="Correo" class="form-label">@Html.DisplayNameFor(m => m.Correo)</label>
                     <span class="text-danger" title="Campo obligatorio">*</span>
-                    <input asp-for="Correo" class="form-control" maxlength="150" placeholder="Ej: mario@opret.gob.do" id="Correo" required aria-required="true" />
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-envelope-fill"></i></span>
+                        <input asp-for="Correo" class="form-control" maxlength="150" placeholder="Ej: mario@opret.gob.do" id="Correo" required aria-required="true" />
+                    </div>
                     <small id="correo-feedback" class="form-text text-muted mt-1"></small>
                 </div>
 
+                <!-- Departamento -->
                 <div class="col-md-6 mb-3">
                     <label asp-for="DepartamentoId" class="form-label">@Html.DisplayNameFor(m => m.DepartamentoId)</label>
                     <span class="text-danger" title="Campo obligatorio">*</span>
-                    <select asp-for="DepartamentoId" asp-items="ViewBag.Departamentos" class="form-control selectpicker" data-live-search="true" data-size="5" id="DepartamentoId" required aria-required="true">
-                        <option value="">Seleccione el departamento al que pertenece</option>
-                    </select>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-building"></i></span>
+                        <select asp-for="DepartamentoId" asp-items="ViewBag.Departamentos" class="form-control selectpicker" data-live-search="true" data-size="5" id="DepartamentoId" required aria-required="true">
+                            <option value="">Seleccione el departamento al que pertenece</option>
+                        </select>
+                    </div>
                 </div>
 
+                <!-- Rol -->
                 <div class="col-md-6 mb-3" id="rolGroup">
                     <label asp-for="RolId" class="form-label">@Html.DisplayNameFor(m => m.RolId)</label>
                     <span class="text-danger" title="Campo obligatorio">*</span>
-                    <select asp-for="RolId" asp-items="ViewBag.Roles" class="form-control selectpicker" data-live-search="true" data-size="5" id="RolId" required aria-required="true">
-                        <option value="">Seleccione el rol que desempeña</option>
-                    </select>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-person-badge-fill"></i></span>
+                        <select asp-for="RolId" asp-items="ViewBag.Roles" class="form-control selectpicker" data-live-search="true" data-size="5" id="RolId" required aria-required="true">
+                            <option value="">Seleccione el rol que desempeña</option>
+                        </select>
+                    </div>
                 </div>
 
+                <!-- División -->
                 <div class="col-md-6 mb-3" id="divisionGroup">
                     <label asp-for="DivisionId" class="form-label">@Html.DisplayNameFor(m => m.DivisionId)</label>
                     <span class="text-danger indicador-division" title="Campo obligatorio">*</span>
-                    <select asp-for="DivisionId" asp-items="ViewBag.Divisiones" class="form-control selectpicker" data-live-search="true" data-size="5" id="DivisionId">
-                        <option value="">Seleccione la división correspondiente</option>
-                    </select>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-diagram-3-fill"></i></span>
+                        <select asp-for="DivisionId" asp-items="ViewBag.Divisiones" class="form-control selectpicker" data-live-search="true" data-size="5" id="DivisionId">
+                            <option value="">Seleccione la división correspondiente</option>
+                        </select>
+                    </div>
                 </div>
 
+                <!-- Estado -->
                 <div class="col-md-6 mb-3">
                     <label asp-for="Activo" class="form-label">Estado del Usuario</label>
                     <span class="text-danger" title="Campo obligatorio">*</span>
-                    <select asp-for="Activo" class="form-control selectpicker" data-size="2">
-                        <option value="true" selected="@Model.Activo">Activo</option>
-                        <option value="false" selected="@(!Model.Activo)">Inactivo</option>
-                    </select>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-toggle-on"></i></span>
+                        <select asp-for="Activo" class="form-control selectpicker" data-size="2">
+                            <option value="true" selected="@Model.Activo">Activo</option>
+                            <option value="false" selected="@(!Model.Activo)">Inactivo</option>
+                        </select>
+                    </div>
                 </div>
 
+                <!-- Encargado Departamental -->
                 <div class="col-md-6 mb-3">
                     <div class="form-check form-switch">
                         <input asp-for="EsEncargadoDepartamental" class="form-check-input" type="checkbox" id="flexSwitchCheckDefault" />
-                        <label class="form-check-label" for="flexSwitchCheckDefault">Encargado Departamental</label>
+                        <label class="form-check-label" for="flexSwitchCheckDefault">
+                           Encargado Departamental
+                        </label>
                         <br />
                         <small class="form-text text-muted">
                             Si se marca, el usuario será el encargado del departamento y no requerirá división.
@@ -212,7 +248,7 @@
                 </div>
             </div>
 
-
+            <!-- Botón de envío -->
             <div class="mt-auto">
                 <button type="submit" class="btn btn-azul d-flex justify-content-center align-items-center gap-2 w-100">
                     ACTUALIZAR USUARIO

@@ -45,6 +45,11 @@
         margin-bottom: 2rem;
         padding: 2rem;
     }
+
+    .form-label {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
 </style>
 
 <form asp-action="Create" method="post" autocomplete="off" id="createForm">
@@ -55,28 +60,47 @@
         <div class="card shadow-sm border-0 p-4 card-adjusted">
 
             <div class="row">
+                <!-- Nombre -->
                 <div class="col-md-6 mb-3">
                     <label asp-for="Nombre" class="form-label">@Html.DisplayNameFor(m => m.Nombre)</label>
                     <span class="text-danger" title="Campo obligatorio">*</span>
-                    <input asp-for="Nombre" class="form-control" maxlength="100" placeholder="Ej: Recursos Humanos" />
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-building"></i></span>
+                        <input asp-for="Nombre" class="form-control" maxlength="100" placeholder="Ej: Recursos Humanos" />
+                    </div>
                     <span asp-validation-for="Nombre" class="text-danger d-none"></span>
                 </div>
 
+                <!-- Iniciales -->
                 <div class="col-md-6 mb-3">
-                    <label asp-for="Iniciales" class="form-label">@Html.DisplayNameFor(m => m.Iniciales)<small class="text-muted">(Puede editarse)</small></label>
+                    <label asp-for="Iniciales" class="form-label">
+                        @Html.DisplayNameFor(m => m.Iniciales)
+                        <small class="text-muted">(Puede editarse)</small>
+                    </label>
                     <span class="text-danger" title="Campo obligatorio">*</span>
-                    <input asp-for="Iniciales" class="form-control" id="codigoCorto" maxlength="20" placeholder="Ej: RH, se sugiere automáticamente" />
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-code-slash"></i></span>
+                        <input asp-for="Iniciales" class="form-control" id="codigoCorto" maxlength="20" placeholder="Ej: RH, se sugiere automáticamente" />
+                    </div>
                     <span asp-validation-for="Iniciales" class="text-danger d-none"></span>
                 </div>
             </div>
 
+            <!-- Descripción -->
             <div class="mb-3">
-                <label asp-for="Descripcion" class="form-label">@Html.DisplayNameFor(m => m.Descripcion)<span class="text-muted">(Opcional)</span></label>
-                <textarea asp-for="Descripcion" maxlength="500" class="form-control" placeholder="Ej: Departamento encargado de gestionar procesos humanos, nómina y bienestar institucional..."></textarea>
+                <label asp-for="Descripcion" class="form-label">
+                    @Html.DisplayNameFor(m => m.Descripcion)
+                    <span class="text-muted">(Opcional)</span>
+                </label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-card-text"></i></span>
+                    <textarea asp-for="Descripcion" maxlength="500" class="form-control" placeholder="Ej: Departamento encargado de gestionar procesos humanos, nómina y bienestar institucional..."></textarea>
+                </div>
                 <span asp-validation-for="Descripcion" class="text-danger d-none"></span>
                 <div id="contadorDescripcion" class="mt-2 text-muted text-end"></div>
             </div>
 
+            <!-- Botón de envío -->
             <div class="mt-auto">
                 <button type="submit" class="btn btn-azul d-flex justify-content-center align-items-center gap-2 w-100">
                     CREAR DEPARTAMENTO
