@@ -199,94 +199,68 @@
             const encargadoCheckbox = $('#flexSwitchCheckDefault');
             const indicadorDivision = $('.indicador-division');
 
-          // Verificación de correo con validación de formato
-          $('#Correo').on('blur', function () {
-            var correo = $(this).val();
-            var feedback = $('#correo-feedback');
-            var correoInput = $(this); // Asegura referencia al input
-            var formatoValido = /^[^\s@@]+@@[^\s@@]+\.[^\s@@]+$/;
-
-            if (correo.length === 0) {
-                feedback.html('');
-                feedback.removeClass('text-warning text-success text-danger text-muted');
-                correoInput.removeClass('is-valid is-invalid');
-                return;
+            // Función para eliminar solo espacios al principio
+            function limpiarEspaciosInicio(texto) {
+                return texto.replace(/^\s+/, ''); // Solo elimina espacios al inicio
             }
 
-            if (!formatoValido.test(correo)) {
-                feedback.html('<i class="fas fa-info-circle text-danger"></i> Formato de correo inválido');
-                feedback.addClass('text-danger').removeClass('text-success text-warning text-muted');
-                correoValido = false;
-                return;
-            }
+            // Limpiar espacios al principio en el input de Nombre (solo en blur)
+            nombreInput.on("blur", function () {
+                $(this).val(limpiarEspaciosInicio($(this).val()));
+            });
 
-            $.get('@Url.Action("VerificarCorreo")', { correo: correo })
-                .done(function (data) {
-                    if (!data.dominioValido) {
-                        feedback.html(`<i class="fas fa-ban text-danger"></i> ${data.mensaje}`);
-                        feedback.addClass('text-danger').removeClass('text-success text-warning text-muted');
-                        correoValido = false;
-                    } else if (data.existe) {
-                        feedback.html('<i class="fas fa-exclamation-triangle text-warning"></i> Ya existe un usuario con este correo');
-                        feedback.addClass('text-warning').removeClass('text-success text-danger text-muted');
-                        correoValido = false;
-                    } else {
-                        feedback.html('<i class="fas fa-check-circle text-success"></i> Correo disponible');
-                        feedback.addClass('text-success').removeClass('text-warning text-danger text-muted');
-                        correoValido = true;
-                    }
-                })
-                .fail(function () {
-                    feedback.html('<i class="fas fa-exclamation-circle text-danger"></i> Error al verificar correo');
+            // Limpiar espacios al principio en el input de Apellido (solo en blur)
+            apellidoInput.on("blur", function () {
+                $(this).val(limpiarEspaciosInicio($(this).val()));
+            });
+
+            // Limpiar espacios al principio en el input de Correo (solo en blur)
+            correoInput.on("blur", function () {
+                $(this).val(limpiarEspaciosInicio($(this).val()));
+            });
+
+            // Verificación de correo con validación de formato
+            $('#Correo').on('blur', function () {
+                var correo = $(this).val();
+                var feedback = $('#correo-feedback');
+                var correoInput = $(this); // Asegura referencia al input
+                var formatoValido = /^[^\s@@]+@@[^\s@@]+\.[^\s@@]+$/;
+
+                if (correo.length === 0) {
+                    feedback.html('');
+                    feedback.removeClass('text-warning text-success text-danger text-muted');
+                    correoInput.removeClass('is-valid is-invalid');
+                    return;
+                }
+
+                if (!formatoValido.test(correo)) {
+                    feedback.html('<i class="fas fa-info-circle text-danger"></i> Formato de correo inválido');
                     feedback.addClass('text-danger').removeClass('text-success text-warning text-muted');
                     correoValido = false;
-                });
-        });
-            // Función para eliminar espacios extras
-            function limpiarEspacios(texto) {
-                return texto.replace(/\s+/g, ' ').trim();
-            }
-
-            // Limpiar espacios en el input de Nombre
-            nombreInput.on("input", function () {
-                let valor = $(this).val();
-                let valorLimpio = limpiarEspacios(valor);
-
-                if (valor !== valorLimpio) {
-                    $(this).val(valorLimpio);
+                    return;
                 }
-            });
 
-            nombreInput.on("blur", function () {
-                $(this).val(limpiarEspacios($(this).val()));
-            });
-
-            // Limpiar espacios en el input de Apellido
-            apellidoInput.on("input", function () {
-                let valor = $(this).val();
-                let valorLimpio = limpiarEspacios(valor);
-
-                if (valor !== valorLimpio) {
-                    $(this).val(valorLimpio);
-                }
-            });
-
-            apellidoInput.on("blur", function () {
-                $(this).val(limpiarEspacios($(this).val()));
-            });
-
-            // Limpiar espacios en el input de Correo
-            correoInput.on("input", function () {
-                let valor = $(this).val();
-                let valorLimpio = valor.replace(/\s+/g, '').trim();
-
-                if (valor !== valorLimpio) {
-                    $(this).val(valorLimpio);
-                }
-            });
-
-            correoInput.on("blur", function () {
-                $(this).val($(this).val().replace(/\s+/g, '').trim());
+                $.get('@Url.Action("VerificarCorreo")', { correo: correo })
+                    .done(function (data) {
+                        if (!data.dominioValido) {
+                            feedback.html(`<i class="fas fa-ban text-danger"></i> ${data.mensaje}`);
+                            feedback.addClass('text-danger').removeClass('text-success text-warning text-muted');
+                            correoValido = false;
+                        } else if (data.existe) {
+                            feedback.html('<i class="fas fa-exclamation-triangle text-warning"></i> Ya existe un usuario con este correo');
+                            feedback.addClass('text-warning').removeClass('text-success text-danger text-muted');
+                            correoValido = false;
+                        } else {
+                            feedback.html('<i class="fas fa-check-circle text-success"></i> Correo disponible');
+                            feedback.addClass('text-success').removeClass('text-warning text-danger text-muted');
+                            correoValido = true;
+                        }
+                    })
+                    .fail(function () {
+                        feedback.html('<i class="fas fa-exclamation-circle text-danger"></i> Error al verificar correo');
+                        feedback.addClass('text-danger').removeClass('text-success text-warning text-muted');
+                        correoValido = false;
+                    });
             });
 
             function cargarDivisiones(departamentoId) {
@@ -344,10 +318,10 @@
             $('#createForm').on('submit', function (e) {
                 e.preventDefault();
 
-                // Limpiar espacios finales antes de enviar
-                nombreInput.val(limpiarEspacios(nombreInput.val()));
-                apellidoInput.val(limpiarEspacios(apellidoInput.val()));
-                correoInput.val(correoInput.val().replace(/\s+/g, '').trim());
+                // Limpiar espacios al principio antes de enviar
+                nombreInput.val(limpiarEspaciosInicio(nombreInput.val()));
+                apellidoInput.val(limpiarEspaciosInicio(apellidoInput.val()));
+                correoInput.val(limpiarEspaciosInicio(correoInput.val()));
 
                 const esEncargado = encargadoCheckbox.is(':checked');
                 const camposObligatorios = ['Nombre', 'Apellido', 'Correo', 'DepartamentoId', 'RolId'];
