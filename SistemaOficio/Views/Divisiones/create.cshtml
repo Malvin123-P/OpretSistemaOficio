@@ -121,7 +121,7 @@
 
             <!-- Botón de envío -->
             <div class="mt-auto">
-                <button type="submit" class="btn btn-azul d-flex justify-content-center align-items-center gap-2 w-100">
+                <button type="submit" id="submitBtn" class="btn btn-azul d-flex justify-content-center align-items-center gap-2 w-100">
                     CREAR DIVISIÓN
                 </button>
             </div>
@@ -141,7 +141,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/css/bootstrap-select.min.css">
 
     <script>
-                $(document).ready(function () {
+        $(document).ready(function () {
             $('form').attr('novalidate', 'novalidate');
             $('.selectpicker').selectpicker();
 
@@ -162,56 +162,120 @@
             const departamentoSelect = $('[name="DepartamentoId"]');
             const descripcionInput = $('[name="Descripcion"]');
             const contador = $('#contadorDescripcion');
+            const submitBtn = $('#submitBtn');
+            const createForm = $('#createForm');
 
             // Función para eliminar solo espacios al principio
             function limpiarEspaciosInicio(texto) {
-                return texto.replace(/^\s+/, ''); // Solo elimina espacios al inicio
+                if (typeof texto !== 'string') return '';
+                return texto.replace(/^\s+/, '');
             }
 
-            // Limpiar espacios al principio en el input de Nombre
-            nombreInput.on("blur", function () {
-                $(this).val(limpiarEspaciosInicio($(this).val()));
-            });
+            // Función para obtener prefijo de iniciales
+            function obtenerPrefijo(nombre) {
+                const palabras = nombre.trim().split(/\s+/).filter(p => p.length > 0);
+                return palabras.map(p => p.charAt(0).toUpperCase()).join("");
+            }
 
-            // Limpiar espacios al principio en el input de Iniciales
-            inicialesInput.on("blur", function () {
-                $(this).val(limpiarEspaciosInicio($(this).val()));
-            });
+            function configurarValidacionEspacios() {
+                // Prevenir espacios al principio mientras se escribe
+                $('input, textarea').on('keydown', function (e) {
+                    if (e.keyCode === 32 || e.key === ' ') {
+                        const cursorPos = this.selectionStart;
+                        const cursorAlInicio = cursorPos === 0;
+                        const textoVacio = this.value === '';
 
-            // Generar iniciales automáticamente (sin limpiar espacios internos)
+                        if (cursorAlInicio || textoVacio) {
+                            e.preventDefault();
+                            return false;
+                        }
+                    }
+                });
+
+                // Prevenir pegado de contenido con espacios al principio
+                $('input, textarea').on('paste', function (e) {
+                    const clipboardData = e.originalEvent.clipboardData || window.clipboardData;
+                    const pastedText = clipboardData.getData('text');
+
+                    if (pastedText && pastedText.match(/^\s/)) {
+                        e.preventDefault();
+                        const textoLimpio = limpiarEspaciosInicio(pastedText);
+                        const startPos = this.selectionStart;
+                        const endPos = this.selectionEnd;
+
+                        this.value = this.value.substring(0, startPos) + textoLimpio + this.value.substring(endPos);
+                        this.selectionStart = this.selectionEnd = startPos + textoLimpio.length;
+                    }
+                });
+
+                // Limpiar espacios al principio en blur
+                $('input, textarea').on('blur', function () {
+                    const valorOriginal = $(this).val();
+                    const valorLimpio = limpiarEspaciosInicio(valorOriginal);
+
+                    if (valorOriginal !== valorLimpio) {
+                        $(this).val(valorLimpio);
+                    }
+                });
+            }
+
+            // Aplicar validación de espacios
+            configurarValidacionEspacios();
+
+            // Generar iniciales automáticamente
             nombreInput.on("input", function () {
-                let valor = $(this).val();
+                let valor = $(this).val().trim();
 
-                // Generar iniciales automáticamente
-                const palabras = valor.trim().split(/\s+/);
-                const generadas = palabras.map(p => p.charAt(0).toUpperCase()).join("");
+                if (!valor) {
+                    inicialesInput.val("");
+                    return;
+                }
 
+                const generadas = obtenerPrefijo(valor);
                 const manual = inicialesInput.val().trim();
-                const combinadas = manual.length > 0 && !manual.startsWith(generadas)
-                    ? generadas + manual
-                    : generadas;
 
-                inicialesInput.val(combinadas);
+                // Solo actualizar si las iniciales están vacías o son iguales a las generadas anteriormente
+                if (!manual || manual === obtenerPrefijo(nombreInput.data('valor-anterior') || '')) {
+                    inicialesInput.val(generadas);
+                }
+
+                // Guardar valor actual para comparación futura
+                nombreInput.data('valor-anterior', valor);
             });
 
-            // Convertir iniciales a mayúsculas
+            // Convertir iniciales a mayúsculas y eliminar espacios
             inicialesInput.on("input", function () {
                 let valor = $(this).val();
-                $(this).val(valor.toUpperCase());
+                // Eliminar espacios y convertir a mayúsculas
+                let valorLimpio = valor.replace(/\s/g, '').toUpperCase();
+
+                if (valor !== valorLimpio) {
+                    $(this).val(valorLimpio);
+                }
             });
 
-            // Limpiar espacios al principio en el textarea de Descripción
-            descripcionInput.on("blur", function () {
-                $(this).val(limpiarEspaciosInicio($(this).val()));
-            });
+            // Inicializar el campo de iniciales
+            function inicializarIniciales() {
+                const nombreValor = nombreInput.val().trim();
+                const inicialesValor = inicialesInput.val().trim();
+
+                if ((!inicialesValor || inicialesValor === obtenerPrefijo(nombreInput.data('valor-anterior') || '')) && nombreValor) {
+                    const prefijo = obtenerPrefijo(nombreValor);
+                    inicialesInput.val(prefijo);
+                }
+
+                nombreInput.data('valor-anterior', nombreValor);
+            }
+
+            inicializarIniciales();
 
             // Contador de caracteres para descripción
-            if (descripcionInput.length) {
+            if (descripcionInput.length && contador.length) {
                 const maxLength = 500;
                 const umbral = 450;
                 let alertaMostrada = false;
 
-                descripcionInput.on("input", function () {
+                function actualizarContador() {
                     const actual = descripcionInput.val().length;
                     contador.text(`${actual}/${maxLength} caracteres`);
                     contador.removeClass("text-warning text-danger");
@@ -234,27 +298,29 @@
                     } else {
                         alertaMostrada = false;
                     }
-                });
+                }
 
-                const actual = descripcionInput.val().length;
-                contador.text(`${actual}/${maxLength} caracteres`);
-                if (actual >= maxLength) contador.addClass("text-danger");
-                else if (actual >= umbral) contador.addClass("text-warning");
+                descripcionInput.on("input", actualizarContador);
+                actualizarContador(); // Inicializar contador
             }
 
-            // Validación institucional al enviar
-            $('#createForm').on('submit', function (e) {
+            createForm.on('submit', function (e) {
                 e.preventDefault();
 
                 // Limpiar espacios al principio antes de enviar
-                nombreInput.val(limpiarEspaciosInicio(nombreInput.val()));
-                inicialesInput.val(limpiarEspaciosInicio(inicialesInput.val()).toUpperCase());
-                descripcionInput.val(limpiarEspaciosInicio(descripcionInput.val()));
+                $('input, textarea').each(function() {
+                    const valorOriginal = $(this).val();
+                    const valorLimpio = limpiarEspaciosInicio(valorOriginal);
+                    if (valorOriginal !== valorLimpio) {
+                        $(this).val(valorLimpio);
+                    }
+                });
 
-                const nombreActual = nombreInput.val();
-                const inicialesActuales = inicialesInput.val();
+                const nombreActual = nombreInput.val().trim();
+                const inicialesActuales = inicialesInput.val().trim();
                 const departamentoIdActual = departamentoSelect.val();
 
+                // Validación final
                 if (!nombreActual || !inicialesActuales || !departamentoIdActual) {
                     Swal.fire({
                         title: '<span>Campos requeridos (<span style="color:#dc3545">*</span>)</span>',
@@ -266,9 +332,32 @@
                     return false;
                 }
 
+                // Deshabilitar botón y mostrar loading
+                submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Creando...');
+
+                // Timeout de seguridad para evitar botón bloqueado
+                setTimeout(() => {
+                    if (submitBtn.prop('disabled')) {
+                        submitBtn.prop('disabled', false).html('CREAR DIVISIÓN');
+                        Swal.fire({
+                            title: "Tiempo de espera agotado",
+                            text: "La operación está tomando más tiempo de lo esperado. Por favor, intente nuevamente.",
+                            icon: "warning",
+                            confirmButtonText: "Entendido",
+                            confirmButtonColor: "#3D6FAD"
+                        });
+                    }
+                }, 10000);
+
+                // Enviar formulario
                 this.submit();
             });
+
+            // Rehabilitar botón si hay error de validación del servidor
+            if ('@ViewContext.ViewData.ModelState.IsValid' === 'False') {
+                submitBtn.prop('disabled', false).html('CREAR DIVISIÓN');
+            }
+
         });
     </script>
-       
 }

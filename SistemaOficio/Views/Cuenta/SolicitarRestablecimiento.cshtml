@@ -11,7 +11,6 @@
     <title>@ViewData["Title"] - OfiGest</title>
     <meta http-equiv="Cache-Control" content="no-store" />
 
-
     <!-- Estilos institucionales -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" />
@@ -191,7 +190,7 @@
     <div class="main-container">
         <div class="card card-login">
             <div class="card-body text-center">
-                <form asp-action="SolicitarRestablecimiento" method="post" class="d-grid gap-1" autocomplete="on">
+                <form id="resetForm" asp-action="SolicitarRestablecimiento" method="post" class="d-grid gap-1" autocomplete="on">
                     @Html.AntiForgeryToken()
 
                     <h1 class="titulo-app mb-0">OfiGest</h1>
@@ -210,10 +209,12 @@
                         <span asp-validation-for="Correo" class="text-danger"></span>
                     </div>
 
-                    <button type="submit" class="btn btn-login d-flex justify-content-center align-items-center gap-2 mt-3">
-                        <span>Enviar enlace de recuperación</span>
+                    <button type="submit" id="btnReset" class="btn btn-login d-flex justify-content-center align-items-center gap-2 mt-3">
+                        <div class="btn-content">
+                            <span id="btnText">Enviar enlace de recuperación</span>
+                        </div>
                         <div class="progress-container">
-                            <div class="progress-bar custom-progress"></div>
+                            <div class="progress-bar custom-progress" id="resetProgress"></div>
                         </div>
                     </button>
 
@@ -225,66 +226,155 @@
 
     <div class="footer-bar"></div>
 
+    <!-- Scripts directamente en el body -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.3/jquery.validate.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/3.2.12/jquery.validate.unobtrusive.min.js"></script>
+
     <script>
         document.addEventListener("DOMContentLoaded", function () {
-            const form = document.querySelector('form');
             const correoInput = document.getElementById('Correo');
-            const btnLogin = document.querySelector('.btn-login');
-            const progressBar = document.querySelector('.progress-bar');
+            const resetForm = document.getElementById('resetForm');
+            const btnReset = document.getElementById('btnReset');
+            const btnText = document.getElementById('btnText');
+            const resetProgress = document.getElementById('resetProgress');
             const mensajeExito = document.querySelector('.alert-success');
-            const mensajeError = document.querySelector('.alert-danger');
 
-            // Función para eliminar espacios extras
-            function limpiarEspacios(texto) {
-                return texto.replace(/\s+/g, '').trim(); // Elimina todos los espacios
+            let enviandoFormulario = false;
+
+            // Función para eliminar espacios al principio
+            function limpiarEspaciosInicio(texto) {
+                if (typeof texto !== 'string') return '';
+                return texto.replace(/^\s+/, '');
             }
 
-            // Limpiar espacios en el input de Correo
-            if (correoInput) {
-                correoInput.addEventListener('input', function () {
-                    let valor = this.value;
-                    let valorLimpio = limpiarEspacios(valor);
+            function configurarValidacionEspacios() {
+                // Prevenir espacios al principio mientras se escribe
+                if (!correoInput) return;
 
-                    if (valor !== valorLimpio) {
-                        this.value = valorLimpio;
+                correoInput.addEventListener('keydown', function (e) {
+                    if (e.keyCode === 32 || e.key === ' ') {
+                        const cursorPos = this.selectionStart;
+                        const cursorAlInicio = cursorPos === 0;
+                        const textoVacio = this.value === '';
+
+                        if (cursorAlInicio || textoVacio) {
+                            e.preventDefault();
+                            return false;
+                        }
+                    }
+                });
+
+                correoInput.addEventListener('paste', function (e) {
+                    const clipboardData = e.clipboardData || window.clipboardData;
+                    const pastedText = clipboardData.getData('text');
+
+                    if (pastedText && pastedText.match(/^\s/)) {
+                        e.preventDefault();
+                        const textoLimpio = limpiarEspaciosInicio(pastedText);
+                        const startPos = this.selectionStart;
+                        const endPos = this.selectionEnd;
+
+                        this.value = this.value.substring(0, startPos) + textoLimpio + this.value.substring(endPos);
+                        this.selectionStart = this.selectionEnd = startPos + textoLimpio.length;
                     }
                 });
 
                 correoInput.addEventListener('blur', function () {
-                    this.value = limpiarEspacios(this.value);
+                    const valorOriginal = this.value;
+                    const valorLimpio = limpiarEspaciosInicio(valorOriginal);
+
+                    if (valorOriginal !== valorLimpio) {
+                        this.value = valorLimpio;
+                    }
                 });
             }
 
-            form?.addEventListener('submit', function (e) {
-                // Limpiar espacios finales antes de enviar
-                if (correoInput) {
-                    correoInput.value = limpiarEspacios(correoInput.value);
-                }
+            // Aplicar validación de espacios
+            configurarValidacionEspacios();
 
-                btnLogin.disabled = true;
-                btnLogin.querySelector('span').textContent = 'Enviando enlace...';
-                simularProgreso();
-            });
-
+            // Función para simular el progreso
             function simularProgreso() {
                 let progress = 0;
                 const interval = setInterval(() => {
                     progress += 5;
-                    progressBar.style.width = progress + '%';
-                    if (progress >= 100) clearInterval(interval);
+                    resetProgress.style.width = progress + '%';
+
+                    if (progress >= 100) {
+                        clearInterval(interval);
+                    }
                 }, 150);
             }
 
-            [mensajeExito, mensajeError].forEach(msg => {
-                if (msg) {
+            // Validación del formulario antes de enviar
+            if (resetForm) {
+                resetForm.addEventListener('submit', function (e) {
+                    if (enviandoFormulario) {
+                        e.preventDefault();
+                        return;
+                    }
+
+                    // Limpiar espacios al principio antes de enviar
+                    if (correoInput) {
+                        correoInput.value = limpiarEspaciosInicio(correoInput.value);
+                    }
+
+                    // Validar campos obligatorios
+                    if (!correoInput.value.trim()) {
+                        e.preventDefault();
+                        return;
+                    }
+
+                    // Deshabilitar botón y mostrar estado de carga
+                    enviandoFormulario = true;
+                    btnReset.disabled = true;
+                    btnText.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Enviando...';
+
+                    // Simular progreso
+                    simularProgreso();
+
+                    // Timeout de seguridad para evitar botón bloqueado
                     setTimeout(() => {
-                        msg.classList.add("fade-out");
-                        setTimeout(() => {
-                            if (msg.parentNode) msg.remove();
-                        }, 500);
-                    }, 5000);
-                }
+                        if (btnReset.disabled) {
+                            btnReset.disabled = false;
+                            btnText.textContent = 'Enviar enlace de recuperación';
+                            enviandoFormulario = false;
+                            resetProgress.style.width = '0%';
+
+                            // Mostrar alerta de timeout
+                            if (typeof Swal !== 'undefined') {
+                                Swal.fire({
+                                    title: "Tiempo de espera agotado",
+                                    text: "La operación está tomando más tiempo de lo esperado. Por favor, intente nuevamente.",
+                                    icon: "warning",
+                                    confirmButtonText: "Entendido",
+                                    confirmButtonColor: "#3D6FAD"
+                                });
+                            }
+                        }
+                    }, 10000);
+                });
+            }
+
+            // Cierre animado de mensajes
+            if (mensajeExito) {
+                setTimeout(() => {
+                    mensajeExito.classList.add("fade-out");
+                    setTimeout(() => {
+                        if (mensajeExito.parentNode) {
+                            mensajeExito.remove();
+                        }
+                    }, 500);
+                }, 5000);
+            }
+
+            // Rehabilitar botón si la página se recarga
+            window.addEventListener('beforeunload', function() {
+                btnReset.disabled = false;
+                btnText.textContent = 'Enviar enlace de recuperación';
+                enviandoFormulario = false;
+                resetProgress.style.width = '0%';
             });
         });
     </script>

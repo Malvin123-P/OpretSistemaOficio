@@ -182,6 +182,7 @@
             .link-recuperar:hover {
                 text-decoration: underline;
             }
+
     </style>
 </head>
 
@@ -210,6 +211,7 @@
                         </div>
                     }
 
+                  
                     <div class="form-group mt-3">
                         <i class="bi bi-lock-fill"></i>
                         <input asp-for="NuevaContraseña" class="form-control" type="password" placeholder="Nueva contraseña" />
@@ -239,7 +241,12 @@
 
     <div class="footer-bar"></div>
 
+    <!-- Scripts directamente en el body -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.3/jquery.validate.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/3.2.12/jquery.validate.unobtrusive.min.js"></script>
+
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             const nuevaContraseñaInput = document.querySelector('[name="NuevaContraseña"]');
@@ -249,70 +256,133 @@
             const btnText = document.getElementById('btnText');
             const resetProgress = document.getElementById('resetProgress');
 
-            // Función para eliminar espacios extras
-            function limpiarEspacios(texto) {
-                return texto.replace(/\s+/g, '').trim(); // Elimina todos los espacios
+            let enviandoFormulario = false;
+
+            // Función para eliminar espacios al principio
+            function limpiarEspaciosInicio(texto) {
+                if (typeof texto !== 'string') return '';
+                return texto.replace(/^\s+/, '');
             }
 
-            // Limpiar espacios en el input de Nueva Contraseña
-            if (nuevaContraseñaInput) {
-                nuevaContraseñaInput.addEventListener('input', function () {
-                    let valor = this.value;
-                    let valorLimpio = limpiarEspacios(valor);
+            function configurarValidacionEspacios() {
+                // Prevenir espacios al principio mientras se escribe
+                const inputs = [nuevaContraseñaInput, confirmarContraseñaInput];
 
-                    if (valor !== valorLimpio) {
-                        this.value = valorLimpio;
-                    }
-                });
+                inputs.forEach(input => {
+                    if (!input) return;
 
-                nuevaContraseñaInput.addEventListener('blur', function () {
-                    this.value = limpiarEspacios(this.value);
-                });
-            }
+                    input.addEventListener('keydown', function (e) {
+                        if (e.keyCode === 32 || e.key === ' ') {
+                            const cursorPos = this.selectionStart;
+                            const cursorAlInicio = cursorPos === 0;
+                            const textoVacio = this.value === '';
 
-            // Limpiar espacios en el input de Confirmar Contraseña
-            if (confirmarContraseñaInput) {
-                confirmarContraseñaInput.addEventListener('input', function () {
-                    let valor = this.value;
-                    let valorLimpio = limpiarEspacios(valor);
+                            if (cursorAlInicio || textoVacio) {
+                                e.preventDefault();
+                                return false;
+                            }
+                        }
+                    });
 
-                    if (valor !== valorLimpio) {
-                        this.value = valorLimpio;
-                    }
-                });
+                    input.addEventListener('paste', function (e) {
+                        const clipboardData = e.clipboardData || window.clipboardData;
+                        const pastedText = clipboardData.getData('text');
 
-                confirmarContraseñaInput.addEventListener('blur', function () {
-                    this.value = limpiarEspacios(this.value);
-                });
-            }
+                        if (pastedText && pastedText.match(/^\s/)) {
+                            e.preventDefault();
+                            const textoLimpio = limpiarEspaciosInicio(pastedText);
+                            const startPos = this.selectionStart;
+                            const endPos = this.selectionEnd;
 
-            if (resetForm) {
-                resetForm.addEventListener('submit', function (e) {
-                    // Limpiar espacios finales antes de enviar
-                    if (nuevaContraseñaInput) {
-                        nuevaContraseñaInput.value = limpiarEspacios(nuevaContraseñaInput.value);
-                    }
-                    if (confirmarContraseñaInput) {
-                        confirmarContraseñaInput.value = limpiarEspacios(confirmarContraseñaInput.value);
-                    }
+                            this.value = this.value.substring(0, startPos) + textoLimpio + this.value.substring(endPos);
+                            this.selectionStart = this.selectionEnd = startPos + textoLimpio.length;
+                        }
+                    });
 
-                    btnText.textContent = 'Guardando...';
-                    btnReset.disabled = true;
-                    simularProgreso();
+                    input.addEventListener('blur', function () {
+                        const valorOriginal = this.value;
+                        const valorLimpio = limpiarEspaciosInicio(valorOriginal);
+
+                        if (valorOriginal !== valorLimpio) {
+                            this.value = valorLimpio;
+                        }
+                    });
                 });
             }
 
+            // Aplicar validación de espacios
+            configurarValidacionEspacios();
+
+            // Función para simular el progreso
             function simularProgreso() {
                 let progress = 0;
                 const interval = setInterval(() => {
                     progress += 5;
                     resetProgress.style.width = progress + '%';
-                    if (progress >= 100) clearInterval(interval);
+
+                    if (progress >= 100) {
+                        clearInterval(interval);
+                    }
                 }, 150);
             }
 
+            // Validación del formulario antes de enviar
+            if (resetForm) {
+                resetForm.addEventListener('submit', function (e) {
+                    if (enviandoFormulario) {
+                        e.preventDefault();
+                        return;
+                    }
+
+                    // Limpiar espacios al principio antes de enviar
+                    if (nuevaContraseñaInput) {
+                        nuevaContraseñaInput.value = limpiarEspaciosInicio(nuevaContraseñaInput.value);
+                    }
+                    if (confirmarContraseñaInput) {
+                        confirmarContraseñaInput.value = limpiarEspaciosInicio(confirmarContraseñaInput.value);
+                    }
+
+                    // Validar campos obligatorios
+                    if (!nuevaContraseñaInput.value.trim() || !confirmarContraseñaInput.value.trim()) {
+                        e.preventDefault();
+                        return;
+                    }
+
+                    // Deshabilitar botón y mostrar estado de carga
+                    enviandoFormulario = true;
+                    btnReset.disabled = true;
+                    btnText.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Guardando...';
+
+                    // Simular progreso
+                    simularProgreso();
+
+                    // Timeout de seguridad para evitar botón bloqueado
+                    setTimeout(() => {
+                        if (btnReset.disabled) {
+                            btnReset.disabled = false;
+                            btnText.textContent = 'Guardar contraseña';
+                            enviandoFormulario = false;
+                            resetProgress.style.width = '0%';
+
+                            // Mostrar alerta de timeout
+                            if (typeof Swal !== 'undefined') {
+                                Swal.fire({
+                                    title: "Tiempo de espera agotado",
+                                    text: "La operación está tomando más tiempo de lo esperado. Por favor, intente nuevamente.",
+                                    icon: "warning",
+                                    confirmButtonText: "Entendido",
+                                    confirmButtonColor: "#3D6FAD"
+                                });
+                            }
+                        }
+                    }, 10000);
+                });
+            }
+
+            // Cierre animado de mensajes
             const mensajeExito = document.getElementById("mensajeExito");
             const mensajeError = document.getElementById("mensajeError");
+            const validationSummary = document.querySelector(".validation-summary-errors");
 
             if (mensajeExito) {
                 setTimeout(() => {
@@ -335,6 +405,25 @@
                     }, 500);
                 }, 5000);
             }
+
+            if (validationSummary) {
+                setTimeout(() => {
+                    validationSummary.classList.add("fade-out");
+                    setTimeout(() => {
+                        if (validationSummary.parentNode) {
+                            validationSummary.remove();
+                        }
+                    }, 500);
+                }, 5000);
+            }
+
+            // Rehabilitar botón si la página se recarga
+            window.addEventListener('beforeunload', function() {
+                btnReset.disabled = false;
+                btnText.textContent = 'Guardar contraseña';
+                enviandoFormulario = false;
+                resetProgress.style.width = '0%';
+            });
         });
     </script>
 </body>

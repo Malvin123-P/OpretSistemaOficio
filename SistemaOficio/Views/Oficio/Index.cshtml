@@ -154,7 +154,7 @@
             @if (rolUsuario == "Administrador")
             {
                 <div class="flex-grow-1">
-                    <label class="form-label">Estado</label>
+                    <label class="form-label">Estado</label>  
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-toggle-on"></i></span>
                         <select id="filtroEstado" class="form-control selectpicker">
@@ -282,27 +282,30 @@
 
             // 3. Configurar filtros
             function aplicarFiltros() {
-                const usuario = $('#filtroUsuario').val()?.trim() || '';
-                const departamento = $('#filtroDepartamento').val()?.trim() || '';
-                const asunto = $('#filtroTipoOficio').val()?.trim() || '';
-                const estado = $('#filtroEstado').val()?.trim().toLowerCase();
-                const tieneEstado = $('#tablaOficios thead th').length === 7;
+            const usuario = $('#filtroUsuario').val()?.trim() || '';
+            const departamento = $('#filtroDepartamento').val()?.trim() || '';
+            const asunto = $('#filtroTipoOficio').val()?.trim() || '';
+            const estado = $('#filtroEstado').val()?.trim().toLowerCase();
+            const tieneEstado = $('#tablaOficios thead th').length === 7;
 
-                // Aplicar filtros a las columnas correspondientes
-                tabla.columns(3).search(usuario); // Columna "Creado por"
-                tabla.columns(4).search(departamento); // Columna "Departamento destino"
-                tabla.columns(2).search(asunto); // Columna "Asunto"
+            // Aplicar filtros a las columnas correspondientes
+            tabla.columns(3).search(usuario); // Columna "Creado por"
+            tabla.columns(4).search(departamento); // Columna "Departamento destino"
+            tabla.columns(2).search(asunto); // Columna "Asunto"
 
-                if (tieneEstado && estado) {
-                    if (estado === "activo" || estado === "deshabilitado") {
-                        tabla.columns(5).search(estado); // Columna "Estado"
-                    } else {
-                        tabla.columns(5).search(''); // Mostrar todos
-                    }
+            // CORRECCIÓN: Manejar correctamente el filtro de estado
+            if (tieneEstado) {
+                if (estado === "activo") {
+                    tabla.columns(5).search("activo"); // Solo activos
+                } else if (estado === "deshabilitado") {
+                    tabla.columns(5).search("deshabilitado"); // Solo inactivos
+                } else {
+                    tabla.columns(5).search(''); // Mostrar todos (cuando es vacío o "todos")
                 }
-
-                tabla.draw();
             }
+
+            tabla.draw();
+        }
 
             // Event listeners para los filtros
             $('#filtroUsuario, #filtroDepartamento, #filtroEstado, #filtroTipoOficio')

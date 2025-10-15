@@ -168,8 +168,8 @@
 
             <!-- Botón de envío -->
             <div class="mt-auto">
-                <button type="submit" class="btn btn-azul d-flex justify-content-center align-items-center gap-2 w-100">
-                    <span id="submitText">CREAR USUARIO</span>
+                <button type="submit" id="submitBtn" class="btn btn-azul d-flex justify-content-center align-items-center gap-2 w-100">
+                    CREAR USUARIO
                 </button>
             </div>
         </div>
@@ -212,7 +212,7 @@
                 });
             }
 
-            // Referencias a los inputs de texto
+            // Referencias a los elementos
             const nombreInput = $('[name="Nombre"]');
             const apellidoInput = $('[name="Apellido"]');
             const correoInput = $('#Correo');
@@ -220,44 +220,80 @@
             const departamentoSelect = $('#DepartamentoId');
             const encargadoCheckbox = $('#flexSwitchCheckDefault');
             const indicadorDivision = $('.indicador-division');
+            const submitBtn = $('#submitBtn');
+            const createForm = $('#createForm');
+
+            let correoValido = false;
+            const regexCorreo = /^[^\s@@]+@@[^\s@@]+\.[^\s@@]+$/;
 
             // Función para eliminar solo espacios al principio
             function limpiarEspaciosInicio(texto) {
-                return texto.replace(/^\s+/, ''); // Solo elimina espacios al inicio
+                if (typeof texto !== 'string') return '';
+                return texto.replace(/^\s+/, '');
             }
 
-            // Limpiar espacios al principio en el input de Nombre (solo en blur)
-            nombreInput.on("blur", function () {
-                $(this).val(limpiarEspaciosInicio($(this).val()));
-            });
+            function configurarValidacionEspacios() {
+                // Prevenir espacios al principio mientras se escribe
+                $('input, textarea').on('keydown', function (e) {
+                    if (e.keyCode === 32 || e.key === ' ') {
+                        const cursorPos = this.selectionStart;
+                        const cursorAlInicio = cursorPos === 0;
+                        const textoVacio = this.value === '';
 
-            // Limpiar espacios al principio en el input de Apellido (solo en blur)
-            apellidoInput.on("blur", function () {
-                $(this).val(limpiarEspaciosInicio($(this).val()));
-            });
+                        if (cursorAlInicio || textoVacio) {
+                            e.preventDefault();
+                            return false;
+                        }
+                    }
+                });
 
-            // Limpiar espacios al principio en el input de Correo (solo en blur)
-            correoInput.on("blur", function () {
-                $(this).val(limpiarEspaciosInicio($(this).val()));
-            });
+                // Prevenir pegado de contenido con espacios al principio
+                $('input, textarea').on('paste', function (e) {
+                    const clipboardData = e.originalEvent.clipboardData || window.clipboardData;
+                    const pastedText = clipboardData.getData('text');
 
-            // Verificación de correo con validación de formato
-            $('#Correo').on('blur', function () {
-                var correo = $(this).val();
-                var feedback = $('#correo-feedback');
-                var correoInput = $(this); // Asegura referencia al input
-                var formatoValido = /^[^\s@@]+@@[^\s@@]+\.[^\s@@]+$/;
+                    if (pastedText && pastedText.match(/^\s/)) {
+                        e.preventDefault();
+                        const textoLimpio = limpiarEspaciosInicio(pastedText);
+                        const startPos = this.selectionStart;
+                        const endPos = this.selectionEnd;
 
-                if (correo.length === 0) {
+                        this.value = this.value.substring(0, startPos) + textoLimpio + this.value.substring(endPos);
+                        this.selectionStart = this.selectionEnd = startPos + textoLimpio.length;
+                    }
+                });
+
+                // Limpiar espacios al principio en blur
+                $('input, textarea').on('blur', function () {
+                    const valorOriginal = $(this).val();
+                    const valorLimpio = limpiarEspaciosInicio(valorOriginal);
+
+                    if (valorOriginal !== valorLimpio) {
+                        $(this).val(valorLimpio);
+                    }
+                });
+            }
+
+            // Aplicar validación de espacios
+            configurarValidacionEspacios();
+
+            // Verificación de correo
+            correoInput.on('blur', function () {
+                const correo = $(this).val().trim();
+                const feedback = $('#correo-feedback');
+
+                if (correo === "") {
                     feedback.html('');
-                    feedback.removeClass('text-warning text-success text-danger text-muted');
+                    feedback.removeClass('text-success text-warning text-danger text-muted');
                     correoInput.removeClass('is-valid is-invalid');
+                    correoValido = false;
                     return;
                 }
 
-                if (!formatoValido.test(correo)) {
+                if (!regexCorreo.test(correo)) {
                     feedback.html('<i class="fas fa-info-circle text-danger"></i> Formato de correo inválido');
                     feedback.addClass('text-danger').removeClass('text-success text-warning text-muted');
+                    correoInput.addClass('is-invalid').removeClass('is-valid');
                     correoValido = false;
                     return;
                 }
@@ -267,20 +303,24 @@
                         if (!data.dominioValido) {
                             feedback.html(`<i class="fas fa-ban text-danger"></i> ${data.mensaje}`);
                             feedback.addClass('text-danger').removeClass('text-success text-warning text-muted');
+                            correoInput.addClass('is-invalid').removeClass('is-valid');
                             correoValido = false;
                         } else if (data.existe) {
                             feedback.html('<i class="fas fa-exclamation-triangle text-warning"></i> Ya existe un usuario con este correo');
                             feedback.addClass('text-warning').removeClass('text-success text-danger text-muted');
+                            correoInput.addClass('is-invalid').removeClass('is-valid');
                             correoValido = false;
                         } else {
                             feedback.html('<i class="fas fa-check-circle text-success"></i> Correo disponible');
                             feedback.addClass('text-success').removeClass('text-warning text-danger text-muted');
+                            correoInput.addClass('is-valid').removeClass('is-invalid');
                             correoValido = true;
                         }
                     })
                     .fail(function () {
                         feedback.html('<i class="fas fa-exclamation-circle text-danger"></i> Error al verificar correo');
                         feedback.addClass('text-danger').removeClass('text-success text-warning text-muted');
+                        correoInput.addClass('is-invalid').removeClass('is-valid');
                         correoValido = false;
                     });
             });
@@ -337,19 +377,24 @@
 
             actualizarEstadoDivision();
 
-            $('#createForm').on('submit', function (e) {
+            createForm.on('submit', function (e) {
                 e.preventDefault();
 
                 // Limpiar espacios al principio antes de enviar
-                nombreInput.val(limpiarEspaciosInicio(nombreInput.val()));
-                apellidoInput.val(limpiarEspaciosInicio(apellidoInput.val()));
-                correoInput.val(limpiarEspaciosInicio(correoInput.val()));
+                $('input, textarea').each(function() {
+                    const valorOriginal = $(this).val();
+                    const valorLimpio = limpiarEspaciosInicio(valorOriginal);
+                    if (valorOriginal !== valorLimpio) {
+                        $(this).val(valorLimpio);
+                    }
+                });
 
                 const esEncargado = encargadoCheckbox.is(':checked');
-                const camposObligatorios = ['Nombre', 'Apellido', 'Correo', 'DepartamentoId', 'RolId'];
+                const camposObligatorios = ['Nombre', 'Apellido', 'Correo'];
                 let validacionFallida = false;
                 let primerCampoVacio = null;
 
+                // Validar campos de texto
                 camposObligatorios.forEach(nombre => {
                     const campo = document.querySelector(`[name="${nombre}"]`);
                     if (campo && !campo.value.trim()) {
@@ -358,6 +403,7 @@
                     }
                 });
 
+                // Validar selects
                 const selectpickers = ['DepartamentoId', 'RolId'];
                 selectpickers.forEach(id => {
                     const select = $('#' + id);
@@ -367,9 +413,22 @@
                     }
                 });
 
+                // Validar división si no es encargado
                 if (!esEncargado && (!divisionSelect.val() || divisionSelect.val() === '')) {
                     validacionFallida = true;
                     if (!primerCampoVacio) primerCampoVacio = divisionSelect[0];
+                }
+
+                // Validar correo
+                if (!correoValido) {
+                    Swal.fire({
+                        title: "Correo inválido",
+                        text: "Por favor, ingrese un correo válido y disponible.",
+                        icon: "warning",
+                        confirmButtonText: "Entendido",
+                        confirmButtonColor: "#3D6FAD"
+                    });
+                    return false;
                 }
 
                 if (validacionFallida) {
@@ -390,12 +449,34 @@
                             primerCampoVacio.scrollIntoView({ behavior: 'smooth', block: 'center' });
                         }, 100);
                     });
-
                     return false;
                 }
 
+                // Deshabilitar botón y mostrar loading
+                submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Creando...');
+
+                // Timeout de seguridad
+                setTimeout(() => {
+                    if (submitBtn.prop('disabled')) {
+                        submitBtn.prop('disabled', false).html('CREAR USUARIO');
+                        Swal.fire({
+                            title: "Tiempo de espera agotado",
+                            text: "La operación está tomando más tiempo de lo esperado. Por favor, intente nuevamente.",
+                            icon: "warning",
+                            confirmButtonText: "Entendido",
+                            confirmButtonColor: "#3D6FAD"
+                        });
+                    }
+                }, 10000);
+
+                // Enviar formulario
                 this.submit();
             });
+
+            // Rehabilitar botón si hay error de validación del servidor
+            if ('@ViewContext.ViewData.ModelState.IsValid' === 'False') {
+                submitBtn.prop('disabled', false).html('CREAR USUARIO');
+            }
         });
     </script>
 }

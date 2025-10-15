@@ -101,34 +101,22 @@ namespace OfiGest.Context.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(TipoOficioModel model)
         {
-          
+
+
+            var original = await _manenger.ObtenerPorIdAsync(model.Id);
+            if (original == null)
+            {
+                TempData["Error"] = "Tipo de oficio no encontrado.";
+                return RedirectToAction("Index");
+            }
+            
             if (!string.IsNullOrEmpty(model.Nombre) && !EsNombreValido(model.Nombre))
             {
                 TempData["Validacion"] = "El nombre solo puede contener letras, números, espacios y guiones.";
                 return View(model);
             }
 
-            var original = await _manenger.ObtenerPorIdAsync(model.Id);
-
-            if (original == null)
-            {
-                TempData["Error"] = "Tipo de oficio no encontrado.";
-                return RedirectToAction("Index");
-            }
-
-            bool sinCambios =
-                original.Nombre == model.Nombre &&
-                original.Iniciales == model.Iniciales &&
-                original.Descripcion == model.Descripcion;
-
-            if (sinCambios)
-            {
-                TempData["Warning"] = "No se detectaron cambios en el formulario. Realice alguna modificación antes de actualizar.";
-                return RedirectToAction("Edit", new { id = model.Id });
-            }
-
             var conflictoCompuesto = await _manenger.ExisteInicialesAsync(model.Iniciales,model.Id);
-
             if (conflictoCompuesto)
             {
                 TempData["Validacion"] = "Ya existe un tipo de oficio con el mismo nombre e iniciales .";
@@ -138,14 +126,30 @@ namespace OfiGest.Context.Controllers
             ModelState.Remove(nameof(model.Iniciales));
 
             if (!ModelState.IsValid)
+                return View(model);
+           
+
+            bool sinCambios =
+                original.Nombre == model.Nombre &&
+                original.Iniciales == model.Iniciales &&
+               (original.Descripcion ?? "") == (model.Descripcion ?? "");
+
+            if (sinCambios)
             {
+                TempData["Warning"] = "No se detectaron cambios en el formulario. Realice alguna modificación antes de actualizar.";
+                return RedirectToAction("Edit", new { id = model.Id });
+            }
+
+            if (!ModelState.IsValid)
+            {
+
                 return View(model);
             }
 
             try
             {
                 var actualizado = await _manenger.ActualizarAsync(model);
-                TempData[actualizado ? "Success" : "Warning"] = actualizado
+                TempData[actualizado ? "Success" : "Error"] = actualizado
                     ? "Tipo de oficio modificado correctamente."
                     : "Error al modificar el tipo de oficio. No se realizaron los cambios en la base de datos.";
 

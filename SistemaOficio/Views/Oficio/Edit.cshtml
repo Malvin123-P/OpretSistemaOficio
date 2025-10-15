@@ -335,6 +335,29 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <script>
+         $(document).ready(function () {
+            // Mostrar advertencia si existe
+            const warningMessage = '@Html.Raw(TempData["Warning"]?.ToString())';
+            const ValidacionMessage = '@Html.Raw(TempData["Validacion"]?.ToString())';
+            if (warningMessage) {
+                 Swal.fire({
+                     icon: "warning",
+                     title: "¡Atención!",
+                     text: warningMessage,
+                     confirmButtonText: "Entendido",
+                     confirmButtonColor: "#3D6FAD"
+                 });
+             } else if (ValidacionMessage) {
+                 Swal.fire({
+                     icon: "error",
+                     title: "¡Atención!",
+                     text: ValidacionMessage,
+                     confirmButtonText: "Entendido",
+                     confirmButtonColor: "#3D6FAD"
+                 });
+             }
+
+
         // Variables de control
         let componentesInicializados = false;
         let contenidoOriginal = '';
@@ -342,60 +365,49 @@
 
         // Función para eliminar solo espacios al principio
         function limpiarEspaciosInicio(texto) {
-            return texto.replace(/^\s+/, ''); // Solo elimina espacios al inicio
+            if (typeof texto !== 'string') return '';
+            return texto.replace(/^\s+/, '');
         }
 
-        function verificarSoporteSpellcheck() {
-            const testElement = document.createElement('div');
-            testElement.setAttribute('spellcheck', 'true');
-            testElement.setAttribute('contenteditable', 'true');
+        function configurarValidacionEspacios() {
+            // Prevenir espacios al principio mientras se escribe
+            $('input, textarea').on('keydown', function (e) {
+                if (e.keyCode === 32 || e.key === ' ') {
+                    const cursorPos = this.selectionStart;
+                    const cursorAlInicio = cursorPos === 0;
+                    const textoVacio = this.value === '';
 
-            const soporteCompleto = 'spellcheck' in testElement &&
-                                   'contentEditable' in document.documentElement;
-
-            if (!soporteCompleto) {
-                console.warn('Spellcheck nativo limitado en este navegador');
-
-                // Mostrar mensaje al usuario
-                $('#spellcheckInfo')
-                    .removeClass('spellcheck-info')
-                    .addClass('spellcheck-warning')
-                    .html('<i class="fas fa-exclamation-triangle"></i>' +
-                         '<strong>Corrección limitada:</strong> ' +
-                         'Para mejor corrección ortográfica, use Chrome, Edge o Firefox actualizado. ' +
-                         '<span class="text-muted">(Puede usar F7 para verificar ortografía)</span>');
-            }
-
-            return soporteCompleto;
-        }
-
-        function configurarEventosTeclado() {
-            const editable = $('.note-editable');
-
-            // Mejorar la experiencia de escritura
-            editable.on('keydown', function(e) {
-                // Permitir que el navegador maneje la corrección con F7
-                if (e.key === 'F7') {
-                    // El navegador manejará el spellcheck con F7 automáticamente
-                    console.log('Verificación ortográfica activada (F7)');
-                }
-
-                // Reforzar spellcheck después de escribir
-                if (e.key.length === 1 || e.key === 'Backspace' || e.key === 'Delete') {
-                    setTimeout(() => {
-                        $(this).attr('spellcheck', 'true');
-                    }, 100);
+                    if (cursorAlInicio || textoVacio) {
+                        e.preventDefault();
+                        return false;
+                    }
                 }
             });
 
-            // Reforzar spellcheck después de cambios
-            editable.on('input', function() {
-                $(this).attr('spellcheck', 'true');
+            // Prevenir pegado de contenido con espacios al principio
+            $('input, textarea').on('paste', function (e) {
+                const clipboardData = e.originalEvent.clipboardData || window.clipboardData;
+                const pastedText = clipboardData.getData('text');
+
+                if (pastedText && pastedText.match(/^\s/)) {
+                    e.preventDefault();
+                    const textoLimpio = limpiarEspaciosInicio(pastedText);
+                    const startPos = this.selectionStart;
+                    const endPos = this.selectionEnd;
+
+                    this.value = this.value.substring(0, startPos) + textoLimpio + this.value.substring(endPos);
+                    this.selectionStart = this.selectionEnd = startPos + textoLimpio.length;
+                }
             });
 
-            // Manejar clic derecho para asegurar spellcheck
-            editable.on('contextmenu', function() {
-                $(this).attr('spellcheck', 'true');
+            // Limpiar espacios al principio en blur
+            $('input, textarea').on('blur', function () {
+                const valorOriginal = $(this).val();
+                const valorLimpio = limpiarEspaciosInicio(valorOriginal);
+
+                if (valorOriginal !== valorLimpio) {
+                    $(this).val(valorLimpio);
+                }
             });
         }
 
@@ -403,6 +415,9 @@
             if (componentesInicializados) {
                 return;
             }
+
+            // Aplicar validación de espacios
+            configurarValidacionEspacios();
 
             // 1. Inicializar bootstrap-select
             $('.selectpicker').selectpicker();
@@ -413,86 +428,41 @@
             // 3. Determinar altura según el rol
             const altura = '@rolUsuario' === 'Administrador' ? 400 : 460;
 
-            // 4. Configuración MEJORADA de Summernote con spellcheck
+            // 4. Configuración de Summernote
             $('#summernote').summernote({
                 lang: 'es-ES',
                 height: altura,
                 maxHeight: altura,
-
-                // HABILITAR CORRECCIÓN ORTOGRÁFICA
                 spellCheck: true,
-
-                // Toolbar simplificado y compatible
                 toolbar: [
                     ['style', ['bold', 'italic', 'underline', 'clear']],
                     ['para', ['ul', 'ol', 'paragraph']],
                     ['misc', ['undo', 'redo']]
                 ],
-
                 fontNames: ['Arial', 'Times New Roman', 'Verdana', 'Georgia'],
                 fontSizeUnits: ['px', 'pt'],
                 placeholder: 'Escriba el contenido del oficio aquí...',
                 disableDragAndDrop: true,
                 shortcuts: false,
-
-                // Configuración MEJORADA para spellcheck
                 callbacks: {
                     onInit: function() {
-                        console.log('Editor inicializado - Spellcheck activado');
-
-                        // FORZAR spellcheck en el área editable
+                        console.log('Editor inicializado');
                         const editableElement = $('.note-editable');
                         editableElement.attr('spellcheck', 'true');
                         editableElement.attr('contenteditable', 'true');
 
-                        // Aplicar estilos adicionales para mejor spellcheck
-                        editableElement.css({
-                            'text-rendering': 'optimizeLegibility',
-                            'font-size': '14px',
-                            'line-height': '1.5',
-                            'font-family': 'Arial, sans-serif'
-                        });
-
-                        // Marcar toolbar como compatible
-                        $('.note-toolbar').addClass('toolbar-compatible');
-
-                        // Establecer contenido inicial ya limpio
                         if (contenidoOriginal) {
                             $('#summernote').summernote('code', contenidoOriginal);
                         }
-
-                        // Configurar eventos de teclado para mejor experiencia
-                        configurarEventosTeclado();
-
-                        // Verificar soporte de spellcheck
-                        verificarSoporteSpellcheck();
                     },
                     onChange: function(contents) {
-                        // Limpiar y guardar contenido
                         const contenidoLimpio = limpiarHtmlCompatible(contents);
                         $('input[name="Contenido"]').val(contenidoLimpio);
                     },
                     onPaste: function(e) {
-                        // Limpiar formato al pegar pero mantener texto
                         var bufferText = ((e.originalEvent || e).clipboardData || window.clipboardData).getData('Text');
                         e.preventDefault();
-
-                        // Insertar texto manteniendo el spellcheck
                         document.execCommand('insertText', false, bufferText);
-
-                        // Reforzar spellcheck después de pegar
-                        setTimeout(() => {
-                            const editable = $('.note-editable');
-                            editable.attr('spellcheck', 'true');
-                        }, 100);
-                    },
-                    onBlur: function() {
-                        // Asegurar que el spellcheck permanezca activo
-                        $('.note-editable').attr('spellcheck', 'true');
-                    },
-                    onFocus: function() {
-                        // Reactivar spellcheck al enfocar
-                        $('.note-editable').attr('spellcheck', 'true');
                     }
                 }
             });
@@ -504,19 +474,9 @@
         }
 
         function configurarValidacionFormulario() {
-            // Referencias a los inputs de texto
             const viaInput = $('[name="Via"]');
             const anexosInput = $('[name="Anexos"]');
-
-            // Limpiar espacios al principio en el input de Via (solo en blur)
-            viaInput.on("blur", function () {
-                $(this).val(limpiarEspaciosInicio($(this).val()));
-            });
-
-            // Limpiar espacios al principio en el input de Anexos (solo en blur)
-            anexosInput.on("blur", function () {
-                $(this).val(limpiarEspaciosInicio($(this).val()));
-            });
+            const btnSubmit = $('#btnSubmit');
 
             // Función para obtener contenido de Summernote
             const getSummernoteContent = () => {
@@ -533,8 +493,13 @@
                 e.preventDefault();
 
                 // Limpiar espacios al principio antes de enviar
-                viaInput.val(limpiarEspaciosInicio(viaInput.val()));
-                anexosInput.val(limpiarEspaciosInicio(anexosInput.val()));
+                $('input, textarea').each(function() {
+                    const valorOriginal = $(this).val();
+                    const valorLimpio = limpiarEspaciosInicio(valorOriginal);
+                    if (valorOriginal !== valorLimpio) {
+                        $(this).val(valorLimpio);
+                    }
+                });
 
                 // Actualizar campo oculto con contenido actual
                 const contenidoActual = getSummernoteContent();
@@ -561,7 +526,6 @@
                 });
 
                 if (camposInvalidos.length > 0) {
-                    const camposFaltantes = camposInvalidos.map(c => c.nombre).join(', ');
                     Swal.fire({
                         title: '<span>Campos requeridos (<span style="color:#dc3545">*</span>)</span>',
                         text: "Por favor complete todos los campos obligatorios.",
@@ -572,25 +536,13 @@
                     return;
                 }
 
-                // Validar URL de anexos si se proporciona - SOLO SWAL, SIN ESTILOS EN EL INPUT
+                // Validar URL de anexos si se proporciona
                 const anexosUrl = anexosInput.val().trim();
                 if (anexosUrl && !esUrlValida(anexosUrl)) {
                     Swal.fire({
                         title: 'URL inválida',
                         text: 'Por favor, ingrese una URL válida para los anexos.',
                         icon: 'warning',
-                        confirmButtonText: 'Entendido',
-                        confirmButtonColor: '#3D6FAD'
-                    });
-                    return;
-                }
-
-                // Verificar si hay cambios
-                if (!hayCambiosSignificativos(contenidoActual)) {
-                    Swal.fire({
-                        icon: 'warning',
-                        title: '¡Atención!',
-                        text: 'No se detectaron cambios en el formulario. Realice alguna modificación antes de actualizar.',
                         confirmButtonText: 'Entendido',
                         confirmButtonColor: '#3D6FAD'
                     });
@@ -607,44 +559,25 @@
 
                 // Deshabilitar botón para evitar múltiples envíos
                 enviandoFormulario = true;
-                $('#btnSubmit').prop('disabled', true).html('ACTUALIZANDO...');
+                btnSubmit.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Actualizando...');
 
-                // Enviar formulario después de un breve delay
+                // Timeout de seguridad
                 setTimeout(() => {
-                    // Remover el event listener temporalmente para evitar loop
-                    $('#formEdit').off('submit');
+                    if (btnSubmit.prop('disabled')) {
+                        btnSubmit.prop('disabled', false).html('ACTUALIZAR OFICIO');
+                        Swal.fire({
+                            title: "Tiempo de espera agotado",
+                            text: "La operación está tomando más tiempo de lo esperado. Por favor, intente nuevamente.",
+                            icon: "warning",
+                            confirmButtonText: "Entendido",
+                            confirmButtonColor: "#3D6FAD"
+                        });
+                        enviandoFormulario = false;
+                    }
+                }, 10000);
 
-                    // Enviar el formulario
-                    document.getElementById('formEdit').submit();
-                }, 300);
-            });
-        }
-
-        function hayCambiosSignificativos(contenidoActual) {
-            const original = {
-                contenido: contenidoOriginal,
-                tipo: '@Model.TipoOficioId',
-                dirigido: '@(Model.DirigidoDepartamento)',
-                via: '@Html.Raw(Model.Via ?? "")'.trim(),
-                anexos: '@Html.Raw(Model.Anexos ?? "")'.trim(),
-                estado: document.querySelector('[name="Estado"]') ?
-                    ('@Model.Estado'.toLowerCase() === 'true' ? 'true' : 'false') : null
-            };
-
-            const actual = {
-                contenido: contenidoActual,
-                tipo: document.querySelector('[name="TipoOficioId"]')?.value || '',
-                dirigido: document.querySelector('[name="DirigidoDepartamento"]')?.value || '',
-                via: (document.querySelector('[name="Via"]')?.value || '').trim(),
-                anexos: (document.querySelector('[name="Anexos"]')?.value || '').trim(),
-                estado: document.querySelector('[name="Estado"]') ?
-                    document.querySelector('[name="Estado"]').value.toLowerCase() : null
-            };
-
-            // Comparar cada campo
-            return Object.keys(original).some(key => {
-                if (key === 'estado' && original.estado === null) return false;
-                return original[key] !== actual[key];
+                // Enviar formulario
+                this.submit();
             });
         }
 
@@ -652,21 +585,15 @@
             if (!html || html.trim() === '') return '';
 
             try {
-                // Etiquetas permitidas (compatibles con PDF)
                 const etiquetasPermitidas = ['p', 'br', 'b', 'strong', 'i', 'em', 'u', 'ul', 'ol', 'li'];
-
-                // Crear elemento temporal
                 const tempDiv = document.createElement("div");
                 tempDiv.innerHTML = html;
 
-                // Función para limpiar recursivamente
                 function limpiarElemento(elemento) {
-                    // Remover todos los atributos (estilos, clases, etc.)
                     while (elemento.attributes.length > 0) {
                         elemento.removeAttribute(elemento.attributes[0].name);
                     }
 
-                    // Procesar hijos
                     for (let i = elemento.childNodes.length - 1; i >= 0; i--) {
                         const node = elemento.childNodes[i];
 
@@ -674,17 +601,14 @@
                             const tagName = node.tagName.toLowerCase();
 
                             if (etiquetasPermitidas.includes(tagName)) {
-                                // Mantener etiquetas permitidas y limpiar sus hijos
                                 limpiarElemento(node);
                             } else if (tagName === 'span') {
-                                // Convertir spans a texto manteniendo hijos
                                 const fragment = document.createDocumentFragment();
                                 while (node.firstChild) {
                                     fragment.appendChild(node.firstChild);
                                 }
                                 elemento.replaceChild(fragment, node);
                             } else {
-                                // Reemplazar etiquetas no permitidas por su contenido
                                 const fragment = document.createDocumentFragment();
                                 while (node.firstChild) {
                                     fragment.appendChild(node.firstChild);
@@ -697,10 +621,8 @@
 
                 limpiarElemento(tempDiv);
 
-                // Obtener HTML limpio
                 let htmlLimpio = tempDiv.innerHTML;
 
-                // Normalizar etiquetas equivalentes
                 htmlLimpio = htmlLimpio
                     .replace(/<strong>/g, '<b>').replace(/<\/strong>/g, '</b>')
                     .replace(/<em>/g, '<i>').replace(/<\/em>/g, '</i>')
@@ -708,7 +630,6 @@
                     .replace(/\s+/g, ' ')
                     .trim();
 
-                // Asegurar que tenga al menos un párrafo
                 if (!htmlLimpio.startsWith('<p>') && !htmlLimpio.startsWith('<ul>') && !htmlLimpio.startsWith('<ol>')) {
                     htmlLimpio = '<p>' + htmlLimpio + '</p>';
                 }
@@ -717,7 +638,6 @@
 
             } catch (error) {
                 console.error('Error limpiando HTML:', error);
-                // Fallback: mantener solo texto básico con párrafos
                 const textoPlano = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
                 return '<p>' + textoPlano + '</p>';
             }
@@ -775,23 +695,11 @@
                         if (length >= 500) contador.classList.add('text-danger');
                     });
 
-                    // Enfocar el textarea
                     setTimeout(() => textarea.focus(), 100);
                 }
             });
 
             return motivo;
-        }
-
-        function protegerComponentes() {
-            // Proteger contra interferencias de notificaciones
-            $(document).on('DOMNodeInserted', function(e) {
-                const target = $(e.target);
-                if (target.hasClass('notificacion-item-usuario') ||
-                    target.closest('.dropdown-notificaciones-usuario').length) {
-                    return;
-                }
-            });
         }
 
         function esUrlValida(url) {
@@ -803,76 +711,14 @@
             }
         }
 
-        $(document).ready(function () {
-            // Mostrar advertencia si existe
-            const warningMessage = '@Html.Raw(TempData["Warning"]?.ToString())';
-            if (warningMessage) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: '¡Atención!',
-                    text: warningMessage,
-                    confirmButtonText: 'Entendido',
-                    confirmButtonColor: '#3D6FAD'
-                });
-            }
-
             // Inicializar componentes
             inicializarComponentes();
-            protegerComponentes();
 
-            // Manejar errores de conexión
-            $(document).ajaxError(function(event, jqxhr, settings, thrownError) {
-                if (jqxhr.status === 0) {
-                    Swal.fire({
-                        title: 'Error de conexión',
-                        text: 'No se pudo conectar al servidor. Verifique su conexión a internet.',
-                        icon: 'error',
-                        confirmButtonText: 'Entendido',
-                        confirmButtonColor: '#3D6FAD'
-                    });
-                    enviandoFormulario = false;
-                    $('#btnSubmit').prop('disabled', false).html('ACTUALIZAR OFICIO');
-                }
-            });
-
-            // Mantener funcionalidad del editor
-            $(document).on('click', '.note-btn', function() {
-                setTimeout(function() {
-                    const editable = $('.note-editable');
-                    if (editable.length) {
-                        editable.css('overflow-y', 'auto');
-                        // Reforzar spellcheck después de acciones de toolbar
-                        editable.attr('spellcheck', 'true');
-                    }
-                }, 50);
-            });
-
-            // Restaurar estado del botón si hay una recarga de página
-            $(window).on('beforeunload', function() {
-                if (enviandoFormulario) {
-                    $('#btnSubmit').prop('disabled', false).html('ACTUALIZAR OFICIO');
-                }
-            });
-        });
-
-        // Función de recuperación si es necesario
-        function reinicializarComponentes() {
-            if (componentesInicializados) {
-                try {
-                    $('.selectpicker').selectpicker('refresh');
-                } catch (error) {
-                    console.log('Reinicializando selectpicker...');
-                    $('.selectpicker').selectpicker();
-                }
-
-                // Reforzar Summernote si es necesario
-                if ($('#summernote').summernote('isEmpty') && contenidoOriginal) {
-                    $('#summernote').summernote('code', contenidoOriginal);
-                }
+            // Rehabilitar botón si hay error de validación del servidor
+            if ('@ViewContext.ViewData.ModelState.IsValid' === 'False') {
+                $('#btnSubmit').prop('disabled', false).html('ACTUALIZAR OFICIO');
+                enviandoFormulario = false;
             }
-        }
-
-        // Exponer función global
-        window.reinicializarComponentesEdit = reinicializarComponentes;
+        });
     </script>
 }
