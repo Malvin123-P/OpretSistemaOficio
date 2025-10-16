@@ -50,7 +50,6 @@ namespace OfiGest.Context.Controllers
         [HttpPost]
         public async Task<JsonResult> MarcarComoLeida([FromBody] int id)
         {
-            Console.WriteLine($" [MarcarComoLeida] ID recibido: {id}");
 
             if (id <= 0) return Json(new { success = false, message = "ID inválido" });
 

@@ -744,13 +744,17 @@
             },
 
             // Función para formatear fecha en formato 12 horas
-            formatearFecha12Horas(fechaString) {
+               formatearFecha12Horas(fechaString) {
                 if (!fechaString) return 'Fecha no disponible';
 
                 try {
-                    const fecha = new Date(fechaString);
+                    // Reemplaza si viene en formato DD/MM/YYYY HH:mm
+                    const partes = fechaString.split(/[\s/:]+/);
+                    if (partes.length < 5) return 'Fecha no disponible';
 
-                    // Formato completo con fecha y hora
+                    const [dia, mes, año, hora, minuto] = partes.map(Number);
+                    const fecha = new Date(año, mes - 1, dia, hora, minuto);
+
                     return fecha.toLocaleString('es-MX', {
                         year: 'numeric',
                         month: '2-digit',
@@ -759,7 +763,6 @@
                         minute: '2-digit',
                         hour12: true
                     });
-
                 } catch (error) {
                     console.error('Error formateando fecha:', error);
                     return 'Fecha no disponible';

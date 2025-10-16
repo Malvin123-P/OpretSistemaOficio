@@ -182,12 +182,15 @@
                         <th>Asunto</th>
                         <th>Creado por</th>
                         <th>Departamento destino</th>
+                        <th>Comunicación</th>
                         @if (rolUsuario == "Administrador")
                         {
                             <th>Estado</th>
                         }
                         <th class="text-center">Acción</th>
                     </tr>
+
+
                 </thead>
                 <tbody>
                     @foreach (var oficio in Model)
@@ -200,10 +203,12 @@
                             <td>@oficio.NombreTipoOficio</td>
                             <td>@oficio.NombreUsuario @oficio.ApellidoUsuario</td>
                             <td>@oficio.DirigidoDepartamento</td>
+                            <td>Pendiente</td>
                             @if (rolUsuario == "Administrador")
                             {
                                 <td>@(oficio.Estado ? "Activo" : "Deshabilitado")</td>
                             }
+                           
                             <td class="text-center d-flex justify-content-center gap-2">
                                 <a asp-controller="Oficio" asp-action="Edit" asp-route-id="@oficio.Id" class="btn btn-sm btn-outline-dark" title="Editar oficio">
                                     <i class="bi bi-pencil-square"></i>

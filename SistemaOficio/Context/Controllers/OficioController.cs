@@ -6,7 +6,6 @@ using OfiGest.Managers;
 using OfiGest.Manegers;
 using OfiGest.Models;
 using OfiGest.Utilities;
-using System.Text.RegularExpressions;
 
 namespace OfiGest.Context.Controllers
 {
@@ -441,7 +440,6 @@ namespace OfiGest.Context.Controllers
             var claimId = User.FindFirst("Id")?.Value;
             return int.TryParse(claimId, out int id) ? id : null;
         }
-
     
         private bool EsCertificacion(string? tipoDocumento)
         {
