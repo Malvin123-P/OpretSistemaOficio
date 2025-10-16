@@ -153,6 +153,7 @@ namespace OfiGest.Managers
                     RequiereRestablecer = u.RequiereRestablecer,
                     ImagenPerfil = u.ImagenPerfil,
                     FechaCreacion = u.FechaCreacion
+                    
                 })
                 .OrderBy(u => u.Nombre)
                 .ThenBy(u => u.Apellido)

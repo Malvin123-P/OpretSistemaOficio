@@ -53,7 +53,7 @@
         margin-bottom: 0.5rem;
     }
 </style>
-<form asp-action="Edit" method="post" enctype="multipart/form-data" id="editForm">
+<form asp-action="Edit" method="post" autocomplete="off" id="editForm">
     <input type="hidden" asp-for="Id" />
     <input type="hidden" id="nombreOriginal" value="@(Model.Nombre)" />
     <input type="hidden" id="inicialesOriginal" value="@(Model.Iniciales)" />
@@ -282,40 +282,49 @@
 
             inicializarIniciales();
 
-            // CORREGIDO: Contador de caracteres para descripción
-            if (descripcionInput.length && contador.length) {
-                const maxLength = 500;
-                const umbral = 450;
-                let alertaMostrada = false;
+                // Contador de caracteres para descripción
+                if (descripcionInput.length && contador.length) {
+                    const maxLength = 500;
+                    const umbral = 450;
+                    let alertaMostrada = false;
 
-                function actualizarContador() {
-                    const actual = descripcionInput.val().length;
-                    contador.text(`${actual}/${maxLength} caracteres`);
-                    contador.removeClass("text-warning text-danger");
+                    function actualizarContador() {
+                        const actual = descripcionInput.val().length;
+                        contador.text(`${actual}/${maxLength} caracteres`);
+                        contador.removeClass("text-warning text-danger");
 
-                    if (actual >= maxLength) {
-                        contador.addClass("text-danger");
-                        if (!alertaMostrada) {
-                            Swal.fire({
-                                title: "Límite alcanzado",
-                                text: "Has llegado al máximo de 500 caracteres permitidos.",
-                                icon: "warning",
-                                confirmButtonText: "Entendido",
-                                confirmButtonColor: "#3D6FAD"
-                            });
-                            alertaMostrada = true;
+                        if (actual >= maxLength) {
+                            contador.addClass("text-danger");
+                            if (!alertaMostrada) {
+                                Swal.fire({
+                                    title: "Límite alcanzado",
+                                    text: "Has llegado al máximo de 500 caracteres permitidos.",
+                                    icon: "warning",
+                                    confirmButtonText: "Entendido",
+                                    confirmButtonColor: "#3D6FAD"
+                                });
+                                alertaMostrada = true;
+                            }
+                        } else if (actual >= umbral) {
+                            contador.addClass("text-warning");
+                            alertaMostrada = false;
+                        } else {
+                            alertaMostrada = false;
                         }
-                    } else if (actual >= umbral) {
-                        contador.addClass("text-warning");
-                        alertaMostrada = false;
-                    } else {
-                        alertaMostrada = false;
                     }
-                }
 
-                descripcionInput.on("input", actualizarContador);
-                actualizarContador(); // Inicializar contador
-            }
+                    // Capturar tanto input como paste
+                    descripcionInput.on("input", actualizarContador);
+                    descripcionInput.on("paste", function(e) {
+                        // Pequeño delay para que se actualice el valor después del pegado
+                        setTimeout(actualizarContador, 10);
+                    });
+
+                    // También capturar el evento cut (cortar) para casos donde se corta texto
+                    descripcionInput.on("cut", actualizarContador);
+
+                    actualizarContador(); // Inicializar contador
+                }
 
             editForm.on('submit', function (e) {
                 e.preventDefault();

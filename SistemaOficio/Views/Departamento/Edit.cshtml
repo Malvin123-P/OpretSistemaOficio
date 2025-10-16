@@ -45,7 +45,7 @@
         margin-bottom: 0.5rem;
     }
 </style>
-<form asp-action="Edit" method="post" enctype="multipart/form-data" id="editForm">
+<form asp-action="Edit" method="post" autocomplete="off" id="editForm">
     <input type="hidden" asp-for="Id" />
     <input type="hidden" id="nombreOriginal" value="@(Model.Nombre)" />
     <input type="hidden" id="inicialesOriginal" value="@(Model.Iniciales)" />
@@ -278,7 +278,16 @@
                     }
                 }
 
+                // Capturar tanto input como paste
                 descripcionInput.on("input", actualizarContador);
+                descripcionInput.on("paste", function(e) {
+                    // Pequeño delay para que se actualice el valor después del pegado
+                    setTimeout(actualizarContador, 10);
+                });
+
+                // También capturar el evento cut (cortar) para casos donde se corta texto
+                descripcionInput.on("cut", actualizarContador);
+
                 actualizarContador(); // Inicializar contador
             }
 

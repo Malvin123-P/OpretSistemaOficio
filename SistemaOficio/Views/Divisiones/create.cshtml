@@ -300,7 +300,16 @@
                     }
                 }
 
+                // Capturar tanto input como paste
                 descripcionInput.on("input", actualizarContador);
+                descripcionInput.on("paste", function(e) {
+                    // Pequeño delay para que se actualice el valor después del pegado
+                    setTimeout(actualizarContador, 10);
+                });
+
+                // También capturar el evento cut (cortar) para casos donde se corta texto
+                descripcionInput.on("cut", actualizarContador);
+
                 actualizarContador(); // Inicializar contador
             }
 
