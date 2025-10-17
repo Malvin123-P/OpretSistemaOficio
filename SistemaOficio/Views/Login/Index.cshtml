@@ -24,6 +24,7 @@
             --color-primary-dark: #2f5c91;
             --color-success: #0B5926;
             --color-danger: #dc3545;
+            --color-warning: #ffc107;
             --transition-speed: 0.3s;
         }
 
@@ -185,18 +186,35 @@
                 text-decoration: underline;
             }
 
-
         .form-check-input:checked {
             background-color: var(--color-success);
             border-color: var(--color-success);
         }
 
-
         .form-check-input:focus {
             box-shadow: 0 0 0 0.25rem rgba(11, 89, 38, 0.25);
         }
 
-     
+        .shake-animation {
+            animation: shake 0.5s ease-in-out;
+        }
+
+        @@keyframes shake {
+            0%, 100%
+
+        {
+            transform: translateX(0);
+        }
+
+        25% {
+            transform: translateX(-5px);
+        }
+
+        75% {
+            transform: translateX(5px);
+        }
+
+        }
     </style>
 </head>
 <body>
@@ -209,6 +227,14 @@
                     <h1 class="titulo-app mb-0">OfiGest</h1>
                     <h5 class="subtitulo-app text-muted">Gestión de Oficios Institucionales</h5>
 
+                    <!-- ⭐⭐ Mensaje de sesión expirada por timeout -->
+                    @if (ViewBag.MensajeTimeout != null)
+                    {
+                        <div id="mensajeTimeout" class="alert alert-warning alert-timeout text-center mt-3 shake-animation" role="alert">
+                            <i class="bi bi-clock-history me-2"></i> @ViewBag.MensajeTimeout
+                        </div>
+                    }
+
                     <!-- Mensaje de éxito -->
                     @if (TempData["RestablecimientoExitoso"] != null)
                     {
@@ -217,7 +243,14 @@
                         </div>
                     }
 
-                  
+                    <!-- Mensaje de error de credenciales -->
+                    @if (ViewData.ModelState["Contraseña"]?.Errors?.Count > 0)
+                    {
+                        <div id="mensajeError" class="alert alert-danger text-center mt-3" role="alert">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i> @ViewData.ModelState["Contraseña"].Errors.First().ErrorMessage
+                        </div>
+                    }
+
                     <div class="form-group mt-3">
                         <i class="bi bi-envelope"></i>
                         <input asp-for="Correo" class="form-control" id="Correo" name="Correo" placeholder="Correo Institucional" autocomplete="username" />
@@ -270,6 +303,13 @@
             const storageKey = 'correoGuardado';
 
             let enviandoFormulario = false;
+
+            // ⭐⭐ Auto-focus en el campo de correo si hay mensaje de timeout
+            if (document.getElementById('mensajeTimeout') && correoInput) {
+                setTimeout(() => {
+                    correoInput.focus();
+                }, 300);
+            }
 
             // Función para eliminar espacios extras
             function limpiarEspacios(texto) {
@@ -413,11 +453,21 @@
                 });
             }
 
-            // Cierre animado de mensajes
+            // ⭐⭐ Cierre animado de mensajes (incluyendo timeout)
+            const mensajeTimeout = document.getElementById("mensajeTimeout");
             const mensajeExito = document.getElementById("mensajeExito");
             const mensajeError = document.getElementById("mensajeError");
             const validationSummary = document.querySelector(".validation-summary-errors");
 
+            // Mensaje de timeout (dura más tiempo)
+            if (mensajeTimeout) {
+                setTimeout(() => {
+                    mensajeTimeout.classList.add("fade-out");
+                    setTimeout(() => mensajeTimeout.remove(), 500);
+                }, 8000); // 8 segundos para el mensaje de timeout
+            }
+
+            // Mensaje de éxito
             if (mensajeExito) {
                 setTimeout(() => {
                     mensajeExito.classList.add("fade-out");
@@ -425,6 +475,7 @@
                 }, 5000);
             }
 
+            // Mensaje de error
             if (mensajeError) {
                 setTimeout(() => {
                     mensajeError.classList.add("fade-out");
@@ -432,6 +483,7 @@
                 }, 5000);
             }
 
+            // Validación de resumen de errores
             if (validationSummary) {
                 setTimeout(() => {
                     validationSummary.classList.add("fade-out");
@@ -446,6 +498,25 @@
                 enviandoFormulario = false;
                 loginProgress.style.width = '0%';
             });
+
+            // ⭐⭐ Limpiar mensaje de timeout al empezar a escribir
+            if (mensajeTimeout) {
+                const inputs = [correoInput, contraseñaInput];
+                inputs.forEach(input => {
+                    if (input) {
+                        input.addEventListener('input', function() {
+                            if (mensajeTimeout && !mensajeTimeout.classList.contains('fade-out')) {
+                                mensajeTimeout.classList.add('fade-out');
+                                setTimeout(() => {
+                                    if (mensajeTimeout.parentNode) {
+                                        mensajeTimeout.remove();
+                                    }
+                                }, 500);
+                            }
+                        });
+                    }
+                });
+            }
         });
     </script>
 </body>

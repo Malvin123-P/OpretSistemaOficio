@@ -1,5 +1,4 @@
-﻿
-using Microsoft.AspNetCore.Authentication;
+﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using OfiGest.Manegers;
@@ -18,8 +17,13 @@ namespace OfiGest.Context.Controllers
         }
 
         [HttpGet]
-        public IActionResult Index()
+        public IActionResult Index(string timeout)
         {
+            // ⭐⭐ Mostrar mensaje si la sesión expiró por inactividad
+            if (!string.IsNullOrEmpty(timeout))
+            {
+                ViewBag.MensajeTimeout = "Su sesión ha expirado por inactividad. Por favor, ingrese nuevamente.";
+            }
 
             return View(new LoginModel());
         }
@@ -71,18 +75,29 @@ namespace OfiGest.Context.Controllers
             // Claims para autenticación
             var claims = new List<Claim>
             {
-              new Claim(ClaimTypes.Name, usuario.Correo),
-              new Claim(ClaimTypes.Role, usuario.Rol.Nombre),
-              new Claim("Rol", usuario.Rol.Nombre),
-              new Claim("Id", usuario.Id.ToString())
+                new Claim(ClaimTypes.Name, usuario.Correo),
+                new Claim(ClaimTypes.Role, usuario.Rol.Nombre),
+                new Claim("Rol", usuario.Rol.Nombre),
+                new Claim("Id", usuario.Id.ToString())
             };
 
             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
             var principal = new ClaimsPrincipal(identity);
 
-            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
-            return RedirectToAction("Index", "Oficio");
+            // ⭐⭐ Configurar propiedades de autenticación con expiración
+            var authProperties = new AuthenticationProperties
+            {
+                IsPersistent = false,
+                ExpiresUtc = DateTimeOffset.UtcNow.AddMinutes(15),
+                AllowRefresh = true
+            };
 
+            await HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                principal,
+                authProperties);
+
+            return RedirectToAction("Index", "Oficio");
         }
 
         [HttpGet]
@@ -101,5 +116,3 @@ namespace OfiGest.Context.Controllers
         }
     }
 }
-
-

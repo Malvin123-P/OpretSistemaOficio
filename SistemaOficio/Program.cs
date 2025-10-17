@@ -29,22 +29,13 @@ builder.Services.AddAntiforgery(options =>
 
 // Servicios MVC y EF Core con localización de validaciones
 builder.Services.AddControllersWithViews()
-    .AddDataAnnotationsLocalization(); // Validaciones en español
+    .AddDataAnnotationsLocalization();
 
-if (!builder.Environment.IsDevelopment())
+// Configuración de Base de Datos
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
-    builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    {
-        options.UseSqlServer($@"Server={Environment.GetEnvironmentVariable("server")};Database={Environment.GetEnvironmentVariable("database")};Trusted_Connection=True;MultipleActiveResultSets=true;TrustServerCertificate=True;");
-    });
-}
-else
-{
-    builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    {
-        options.UseSqlServer($@"Server={Environment.GetEnvironmentVariable("server")};Database={Environment.GetEnvironmentVariable("database")};Trusted_Connection=True;MultipleActiveResultSets=true;TrustServerCertificate=True;");
-    });
-}
+    options.UseSqlServer($@"Server={Environment.GetEnvironmentVariable("server")};Database={Environment.GetEnvironmentVariable("database")};Trusted_Connection=True;MultipleActiveResultSets=true;TrustServerCertificate=True;");
+});
 
 // Registro de servicios del sistema
 builder.Services.AddScoped<DepartamentosManenger>();
@@ -63,20 +54,25 @@ builder.Services.AddScoped<PdfOficioManager>();
 // Configuración de Data Protection para cookies únicas por sesión
 builder.Services.AddDataProtection();
 
-// Autenticación con cookies  para múltiples sesiones
+// ⭐⭐ CONFIGURACIÓN CORREGIDA DE AUTENTICACIÓN
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
         options.LoginPath = "/Login";
         options.AccessDeniedPath = "/Login/AccesoDenegado";
-        options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
-        options.SlidingExpiration = true;
-        options.Cookie.SameSite = SameSiteMode.Lax;
-        options.Cookie.SecurePolicy = CookieSecurePolicy.None;
-        options.Cookie.HttpOnly = true;
+        options.ExpireTimeSpan = TimeSpan.FromMinutes(15); // 1 minuto de inactividad
+        options.SlidingExpiration = true; // Renovación con cada actividad
 
-        // NOMBRE ÚNICO DE COOKIE para evitar conflicto entre pestañas
-        options.Cookie.Name = "OfiGest.Auth";
+        // ⭐⭐ CORRECCIÓN: Configuración de cookie mejorada
+        options.Cookie = new CookieBuilder
+        {
+            Name = "OfiGest.Auth",
+            SameSite = SameSiteMode.Lax,
+            SecurePolicy = CookieSecurePolicy.None, // Cambiar a Always en producción
+            HttpOnly = true,
+            IsEssential = true,
+            MaxAge = TimeSpan.FromMinutes(15) // ⭐ Coincide con ExpireTimeSpan
+        };
 
         // Configuración para mejor manejo de sesiones múltiples
         options.SessionStore = new MemoryCacheTicketStore();
@@ -85,17 +81,24 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         {
             OnSignedIn = context =>
             {
-                // La cookie se ha establecido correctamente
                 return Task.CompletedTask;
             },
             OnRedirectToLogin = context =>
             {
-                context.Response.StatusCode = 401;
+                // ⭐⭐ CORRECCIÓN: Redirección directa al login
+                if (context.Request.Path.StartsWithSegments("/api"))
+                {
+                    context.Response.StatusCode = 401;
+                }
+                else
+                {
+                    context.Response.Redirect("/Login?timeout=true");
+                }
                 return Task.CompletedTask;
             },
             OnValidatePrincipal = async context =>
             {
-                // Validación adicional del principal si es necesario
+                // Validación adicional si es necesaria
                 await Task.CompletedTask;
             }
         };
@@ -110,10 +113,10 @@ builder.Services.AddAuthorization(options =>
 // Activar sesión para trazabilidad visual 
 builder.Services.AddSession(options =>
 {
-    options.Cookie.Name = "OfiGest.Session"; // Nombre único
+    options.Cookie.Name = "OfiGest.Session";
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
-    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.IdleTimeout = TimeSpan.FromMinutes(15); // Coincide con auth
     options.Cookie.SameSite = SameSiteMode.Lax;
 });
 
@@ -142,25 +145,40 @@ app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Middleware para manejar errores 400 - MEJORADO
+// ⭐⭐ MIDDLEWARE MEJORADO PARA DETECTAR EXPIRACIÓN
 app.Use(async (context, next) =>
 {
-    // Verificar si la solicitud es para recursos estáticos
+    // Solo verificar para rutas que requieren autenticación
     var path = context.Request.Path;
-    if (path.StartsWithSegments("/css") ||
-        path.StartsWithSegments("/js") ||
-        path.StartsWithSegments("/images") ||
-        path.StartsWithSegments("/lib"))
+    var isPublicPath = path.StartsWithSegments("/Login") ||
+                       path.StartsWithSegments("/Error") ||
+                       path.StartsWithSegments("/css") ||
+                       path.StartsWithSegments("/js") ||
+                       path.StartsWithSegments("/images") ||
+                       path.StartsWithSegments("/lib");
+
+    if (!isPublicPath && context.User.Identity.IsAuthenticated)
     {
-        await next();
-        return;
+        // Intentar autenticar para verificar si la cookie sigue siendo válida
+        var result = await context.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        if (!result.Succeeded)
+        {
+            // Limpiar la sesión y redirigir al login
+            context.Response.Redirect("/Login?timeout=true");
+            return;
+        }
     }
 
+    await next();
+});
+
+// Middleware para manejar errores 400
+app.Use(async (context, next) =>
+{
     await next();
 
     if (context.Response.StatusCode == 400 && !context.Response.HasStarted)
     {
-        // Redirigir al login en caso de error 400
         context.Response.Redirect("/Login");
     }
 });
@@ -172,7 +190,7 @@ app.MapControllerRoute(
 
 app.Run();
 
-// Implementación de MemoryCacheTicketStore para manejar múltiples sesiones
+// Implementación de MemoryCacheTicketStore
 public class MemoryCacheTicketStore : ITicketStore
 {
     private const string KeyPrefix = "AuthSessionStore-";
@@ -193,11 +211,13 @@ public class MemoryCacheTicketStore : ITicketStore
     {
         var options = new MemoryCacheEntryOptions();
         var expiresUtc = ticket.Properties.ExpiresUtc;
+
         if (expiresUtc.HasValue)
         {
             options.SetAbsoluteExpiration(expiresUtc.Value);
         }
-        options.SetSlidingExpiration(TimeSpan.FromMinutes(30)); // Match cookie expiration
+
+        options.SetSlidingExpiration(TimeSpan.FromMinutes(15));
 
         _cache.Set(key, ticket, options);
         return Task.CompletedTask;
@@ -214,11 +234,13 @@ public class MemoryCacheTicketStore : ITicketStore
         var key = KeyPrefix + Guid.NewGuid().ToString();
         var options = new MemoryCacheEntryOptions();
         var expiresUtc = ticket.Properties.ExpiresUtc;
+
         if (expiresUtc.HasValue)
         {
             options.SetAbsoluteExpiration(expiresUtc.Value);
         }
-        options.SetSlidingExpiration(TimeSpan.FromMinutes(30));
+
+        options.SetSlidingExpiration(TimeSpan.FromMinutes(15));
 
         _cache.Set(key, ticket, options);
         return Task.FromResult(key);
