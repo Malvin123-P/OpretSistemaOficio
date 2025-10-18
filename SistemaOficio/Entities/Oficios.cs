@@ -27,6 +27,8 @@ namespace OfiGest.Entities
         public string? MotivoModificacion { get; set; }
 
         public string DirigidoDepartamento { get; set; } = string.Empty;
+
+
      
     }
 }

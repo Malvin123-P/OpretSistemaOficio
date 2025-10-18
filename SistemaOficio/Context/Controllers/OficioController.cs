@@ -9,7 +9,7 @@ using OfiGest.Utilities;
 
 namespace OfiGest.Context.Controllers
 {
-    [Authorize]
+    [Authorize(Roles = "Administrador,Usuario")]
     public class OficioController : Controller
     {
         private readonly OficioManager _managerOficio;
@@ -105,6 +105,13 @@ namespace OfiGest.Context.Controllers
 
         public async Task<IActionResult> Index()
         {
+            var usuarioId = ObtenerUsuarioId();
+            if (usuarioId == null)
+            {
+                TempData["Error"] = "Usuario no identificado";
+                return RedirectToAction("Index", "Home");
+            }
+
             var rolUsuario = HttpContext.Session.GetString("RolUsuario");
             var departamentoIdStr = HttpContext.Session.GetString("DepartamentoId");
 
@@ -112,11 +119,11 @@ namespace OfiGest.Context.Controllers
 
             if (rolUsuario == "Administrador")
             {
-                oficios = await _managerOficio.ObtenerTodosAsync();
+                oficios = await _managerOficio.ObtenerTodosAsync(usuarioId.Value);
             }
             else if (int.TryParse(departamentoIdStr, out int departamentoId))
             {
-                oficios = (await _managerOficio.ObtenerActivosAsync())
+                oficios = (await _managerOficio.ObtenerActivosAsync(usuarioId.Value))
                     .Where(o => o.DepartamentoId == departamentoId)
                     .ToList();
             }
@@ -150,7 +157,6 @@ namespace OfiGest.Context.Controllers
 
             return View(oficios);
         }
-
         public async Task<IActionResult> Inactivos()
         {
             var rolUsuario = HttpContext.Session.GetString("RolUsuario");
@@ -262,13 +268,16 @@ namespace OfiGest.Context.Controllers
         public async Task<IActionResult> Create(OficioModel oficio)
         {
             var departamentoUsuario = HttpContext.Session.GetString("NombreDepartamento");
+
+            // Validación: no permitir enviar oficio al mismo departamento del usuario
             if (oficio.DirigidoDepartamento == departamentoUsuario)
             {
-                ViewData["Error"] = "No puedes dirigir un documento a tu propio departamento.";
+                TempData["Validacion"] = "No puedes dirigir un documento a tu propio departamento.";
                 await CargarListasAsync(oficio.TipoOficioId, oficio.DirigidoDepartamento);
                 return View(oficio);
             }
 
+            // Limpieza de propiedades no validables
             ModelStateHelper.LimpiarPropiedadesNoValidables(ModelState,
                 nameof(oficio.Anexos),
                 nameof(oficio.ApellidoUsuario),
@@ -290,7 +299,7 @@ namespace OfiGest.Context.Controllers
             var usuarioId = ObtenerUsuarioId();
             if (usuarioId == null)
             {
-                ViewData["Error"] = "No se pudo identificar al usuario logueado.";
+                TempData["Validacion"] = "No se pudo identificar al usuario logueado.";
                 return RedirectToAction("Index");
             }
 
@@ -298,12 +307,37 @@ namespace OfiGest.Context.Controllers
             {
                 var generarPdf = Request.Form["Descargar"].ToString() == "true";
 
-            
+                // Validar si el departamento REMITENTE tiene encargado
+                var remitenteTieneEncargado = await _context.Usuarios
+                    .AnyAsync(u => u.EsEncargadoDepartamental &&
+                                   u.Activo &&
+                                   u.Departamento.Nombre == departamentoUsuario);
+
+                if (!remitenteTieneEncargado)
+                {
+                    TempData["Validacion"] = "Tu departamento no tiene un encargado registrado. No puedes emitir oficios.";
+                    await CargarListasAsync(oficio.TipoOficioId, oficio.DirigidoDepartamento);
+                    return View(oficio);
+                }
+
+                // Validar si el departamento DESTINO tiene encargado
+                var destinoTieneEncargado = await _context.Usuarios
+                    .AnyAsync(u => u.EsEncargadoDepartamental &&
+                                   u.Activo &&
+                                   u.Departamento.Nombre == oficio.DirigidoDepartamento);
+
+                if (!destinoTieneEncargado)
+                {
+                    TempData["Validacion"] = "El departamento al que deseas dirigir el oficio no tiene un encargado registrado.";
+                    await CargarListasAsync(oficio.TipoOficioId, oficio.DirigidoDepartamento);
+                    return View(oficio);
+                }
+
+                // Crear oficio
                 var resultado = await _managerOficio.CrearOficioAsync(oficio, usuarioId.Value, false);
 
                 if (resultado.Success)
                 {
-                   
                     var documentoCreado = await _context.Oficios
                         .Where(o => o.UsuarioId == usuarioId.Value)
                         .OrderByDescending(o => o.FechaCreacion)
@@ -313,7 +347,6 @@ namespace OfiGest.Context.Controllers
                     {
                         if (generarPdf)
                         {
-                        
                             TempData["OficioCreadoId"] = documentoCreado.Id;
                             TempData["Success"] = "Documento creado correctamente. El PDF se descargará automáticamente.";
                         }
@@ -326,13 +359,13 @@ namespace OfiGest.Context.Controllers
                     }
                 }
 
-                ViewData["Error"] = "Error al crear el documento. Verifica los datos o permisos.";
+                TempData["Validacion"] = "Error al crear el documento. Verifica los datos o permisos.";
                 await CargarListasAsync(oficio.TipoOficioId, oficio.DirigidoDepartamento);
                 return View(oficio);
             }
             catch (Exception ex)
             {
-                ViewData["Error"] = $"Ocurrió un error inesperado: {ex.Message}";
+                TempData["Warning"] = $"Ocurrió un error inesperado: {ex.Message}";
                 await CargarListasAsync(oficio.TipoOficioId, oficio.DirigidoDepartamento);
                 return View(oficio);
             }
@@ -343,9 +376,37 @@ namespace OfiGest.Context.Controllers
         public async Task<IActionResult> Edit(OficioModel modelo)
         {
             var departamentoUsuario = HttpContext.Session.GetString("NombreDepartamento");
+
+            // Validación: no permitir enviar oficio al mismo departamento del usuario
             if (modelo.DirigidoDepartamento == departamentoUsuario)
             {
-                TempData["Error"] = "Tu departamento actual coincide con el destino del documento. Modifica el destino para mantener la trazabilidad institucional.";
+                TempData["Validacion"] = "Tu departamento actual coincide con el destino del documento. Modifica el destino para mantener la trazabilidad institucional.";
+                await CargarListasAsync(modelo.TipoOficioId, modelo.DirigidoDepartamento);
+                return View(modelo);
+            }
+
+            // Validar si el departamento REMITENTE tiene encargado
+            var remitenteTieneEncargado = await _context.Usuarios
+                .AnyAsync(u => u.EsEncargadoDepartamental &&
+                               u.Activo &&
+                               u.Departamento.Nombre == departamentoUsuario);
+
+            if (!remitenteTieneEncargado)
+            {
+                TempData["Validacion"] = "Tu departamento no tiene un encargado registrado. No puedes modificar oficios sin trazabilidad jerárquica.";
+                await CargarListasAsync(modelo.TipoOficioId, modelo.DirigidoDepartamento);
+                return View(modelo);
+            }
+
+            // Validar si el departamento DESTINO tiene encargado
+            var destinoTieneEncargado = await _context.Usuarios
+                .AnyAsync(u => u.EsEncargadoDepartamental &&
+                               u.Activo &&
+                               u.Departamento.Nombre == modelo.DirigidoDepartamento);
+
+            if (!destinoTieneEncargado)
+            {
+                TempData["Validacion"] = "El departamento al que deseas dirigir el oficio no tiene un encargado registrado.";
                 await CargarListasAsync(modelo.TipoOficioId, modelo.DirigidoDepartamento);
                 return View(modelo);
             }
@@ -353,7 +414,7 @@ namespace OfiGest.Context.Controllers
             var original = await _managerOficio.ObtenerPorIdAsync(modelo.Id);
             if (original == null)
             {
-                TempData["Error"] = "Documento no encontrado.";
+                TempData["Validacion"] = "Documento no encontrado.";
                 return RedirectToAction("Index");
             }
 
@@ -367,21 +428,21 @@ namespace OfiGest.Context.Controllers
 
             if (sinCambios)
             {
-                TempData["Warning"] = "No se detectaron cambios en el formulario. Realice alguna modificación antes de actualizar.";
+                TempData["Validacion"] = "No se detectaron cambios en el formulario. Realice alguna modificación antes de actualizar.";
                 await CargarListasAsync(modelo.TipoOficioId, modelo.DirigidoDepartamento);
                 return View(modelo);
             }
 
             ModelStateHelper.LimpiarPropiedadesNoValidables(ModelState,
-              nameof(modelo.Anexos),
-              nameof(modelo.ApellidoUsuario),
-              nameof(modelo.ModificadoEn),
-              nameof(modelo.ModificadoPorId),
-              nameof(modelo.MotivoModificacion),
-              nameof(modelo.NombreDepartamento),
-              nameof(modelo.NombreTipoOficio),
-              nameof(modelo.NombreUsuario),
-              nameof(modelo.Codigo)
+                nameof(modelo.Anexos),
+                nameof(modelo.ApellidoUsuario),
+                nameof(modelo.ModificadoEn),
+                nameof(modelo.ModificadoPorId),
+                nameof(modelo.MotivoModificacion),
+                nameof(modelo.NombreDepartamento),
+                nameof(modelo.NombreTipoOficio),
+                nameof(modelo.NombreUsuario),
+                nameof(modelo.Codigo)
             );
 
             if (!ModelState.IsValid)
@@ -393,14 +454,14 @@ namespace OfiGest.Context.Controllers
             var usuarioId = ObtenerUsuarioId();
             if (usuarioId == null)
             {
-                TempData["Error"] = "No se pudo identificar al usuario logueado.";
+                TempData["Validacion"] = "No se pudo identificar al usuario logueado.";
                 return RedirectToAction("Index");
             }
 
             try
             {
                 var actualizado = await _managerOficio.ActualizarOficioAsync(modelo, usuarioId.Value);
-                TempData[actualizado ? "Success" : "Error"] = actualizado
+                TempData[actualizado ? "Success" : "Validacion"] = actualizado
                     ? "Documento modificado correctamente."
                     : "Error al modificar el documento. No se realizaron los cambios en la base de datos.";
 
@@ -414,7 +475,7 @@ namespace OfiGest.Context.Controllers
             }
             catch (Exception)
             {
-                TempData["Error"] = "Ocurrió un error inesperado al procesar la solicitud.";
+                TempData["Warning"] = "Ocurrió un error inesperado al procesar la solicitud.";
                 await CargarListasAsync(modelo.TipoOficioId, modelo.DirigidoDepartamento);
                 return View(modelo);
             }

@@ -52,7 +52,6 @@ namespace OfiGest.Managers
                 Via = modelo.Via?.Trim(),
                 Anexos = modelo.Anexos?.Trim(),
                 DirigidoDepartamento = modelo.DirigidoDepartamento?.Trim() ?? string.Empty
-                
             };
 
             _context.Oficios.Add(oficio);
@@ -72,13 +71,11 @@ namespace OfiGest.Managers
                     oficio.DepartamentoRemitente?.Nombre ?? "Departamento"
                 );
 
-              
                 byte[]? pdfBytes = null;
                 string? fileName = null;
 
                 if (generarPdf)
                 {
-             
                     var encargadoDepartamental = await _context.Usuarios
                         .Where(u => u.DepartamentoId == usuario.DepartamentoId &&
                                    u.EsEncargadoDepartamental &&
@@ -96,7 +93,7 @@ namespace OfiGest.Managers
                         DirigidoDepartamento = oficio.DirigidoDepartamento,
                         DepartamentoRemitente = oficio.DepartamentoRemitente?.Nombre ?? string.Empty,
                         UsuarioNombre = $"{usuario.Nombre} {usuario.Apellido}".Trim(),
-                        EncargadoDepartamental = encargadoDepartamental ?? "Encargado Departamental", 
+                        EncargadoDepartamental = encargadoDepartamental ?? "Encargado Departamental",
                         FechaCreacion = oficio.FechaCreacion
                     };
 
@@ -120,7 +117,6 @@ namespace OfiGest.Managers
                 Id = tipoOficio.Id,
                 Nombre = tipoOficio.Nombre,
                 Descripcion = tipoOficio.Descripcion,
-            
             };
         }
 
@@ -168,7 +164,6 @@ namespace OfiGest.Managers
 
             if (actualizado)
             {
-            
                 await _context.Entry(oficio).Reference(o => o.TipoOficio).LoadAsync();
 
                 var logger = new LogOficioHelper(_context);
@@ -189,7 +184,8 @@ namespace OfiGest.Managers
             return entidad == null ? null : Proyectar(entidad);
         }
 
-        public async Task<List<OficioModel>> ObtenerTodosAsync()
+        // Métodos actualizados con usuarioId
+        public async Task<List<OficioModel>> ObtenerTodosAsync(int usuarioId)
         {
             var oficios = await _context.Oficios
                 .Include(o => o.TipoOficio)
@@ -198,10 +194,31 @@ namespace OfiGest.Managers
                 .OrderByDescending(o => o.FechaCreacion)
                 .ToListAsync();
 
-            return oficios.Select(Proyectar).ToList();
+            // Verificar para CADA oficio si el DEPARTAMENTO DESTINO tiene notificaciones PENDIENTES
+            var estadosOficios = new List<OficioModel>();
+
+            foreach (var oficio in oficios)
+            {
+                var modelo = Proyectar(oficio);
+
+                // Consultar si hay NOTIFICACIONES PENDIENTES para el DEPARTAMENTO DESTINO de este oficio
+                var tieneNotificacionesPendientes = await _context.Notificaciones
+                    .Include(n => n.Usuario)
+                    .ThenInclude(u => u.Departamento)
+                    .AnyAsync(n => n.OficioId == oficio.Id &&
+                                  !n.EsLeida &&
+                                  n.Usuario.Departamento.Nombre == oficio.DirigidoDepartamento);
+
+                modelo.TieneNotificacionesPendientes = tieneNotificacionesPendientes;
+                modelo.EstadoVisual = tieneNotificacionesPendientes ? "Pendiente" : "Recibido";
+
+                estadosOficios.Add(modelo);
+            }
+
+            return estadosOficios;
         }
 
-        public async Task<List<OficioModel>> ObtenerActivosAsync()
+        public async Task<List<OficioModel>> ObtenerActivosAsync(int usuarioId)
         {
             var oficios = await _context.Oficios
                 .Include(o => o.TipoOficio)
@@ -211,7 +228,28 @@ namespace OfiGest.Managers
                 .OrderByDescending(o => o.FechaCreacion)
                 .ToListAsync();
 
-            return oficios.Select(Proyectar).ToList();
+            // Verificar para CADA oficio si el DEPARTAMENTO DESTINO tiene notificaciones PENDIENTES
+            var estadosOficios = new List<OficioModel>();
+
+            foreach (var oficio in oficios)
+            {
+                var modelo = Proyectar(oficio);
+
+                // Consultar si hay NOTIFICACIONES PENDIENTES para el DEPARTAMENTO DESTINO de este oficio
+                var tieneNotificacionesPendientes = await _context.Notificaciones
+                    .Include(n => n.Usuario)
+                    .ThenInclude(u => u.Departamento)
+                    .AnyAsync(n => n.OficioId == oficio.Id &&
+                                  !n.EsLeida &&
+                                  n.Usuario.Departamento.Nombre == oficio.DirigidoDepartamento);
+
+                modelo.TieneNotificacionesPendientes = tieneNotificacionesPendientes;
+                modelo.EstadoVisual = tieneNotificacionesPendientes ? "Pendiente" : "Recibido";
+
+                estadosOficios.Add(modelo);
+            }
+
+            return estadosOficios;
         }
 
         public async Task<List<OficioModel>> ObtenerInactivosAsync()
@@ -243,7 +281,7 @@ namespace OfiGest.Managers
         }
 
         public async Task<List<Departamento>> ObtenerDepartamentosAsync()
-        {
+            {
             return await _context.Departamentos
                 .OrderBy(d => d.Nombre)
                 .ToListAsync();
@@ -266,7 +304,9 @@ namespace OfiGest.Managers
             Anexos = o.Anexos,
             ModificadoEn = o.ModificadoEn,
             ModificadoPorId = o.ModificadoPorId,
-            MotivoModificacion = o.MotivoModificacion
+            MotivoModificacion = o.MotivoModificacion,
+            TieneNotificacionesPendientes = false, // Se establecerá después
+            EstadoVisual = "Pendiente" // Se establecerá después
         };
     }
 }

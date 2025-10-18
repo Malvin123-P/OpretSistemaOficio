@@ -326,6 +326,28 @@
             const baseOptions = {
                 responsive: true,
                 maintainAspectRatio: false,
+                // CONFIGURACIÓN DE ANIMACIONES
+                animation: {
+                    duration: 1500, // Duración más larga para mejor efecto
+                    easing: 'easeOutQuart', // Tipo de suavizado
+                    animateRotate: true, // Para gráficos circulares
+                    animateScale: true, // Para gráficos de escala
+                    delay: function(context) {
+                        // Animación escalonada para gráficos de barras
+                        if (tipo === 'bar') {
+                            return context.dataIndex * 100;
+                        }
+                        return 0;
+                    }
+                },
+                // Animaciones al hacer hover
+                hover: {
+                    animationDuration: 300
+                },
+                // Animaciones al redimensionar
+                resize: {
+                    animationDuration: 800
+                },
                 plugins: {
                     legend: {
                         display: tipo !== 'bar',
@@ -417,7 +439,38 @@
                         borderColor: tipo === 'bar' ? backgroundColors.map(c => c + '80') : backgroundColors,
                         borderWidth: window.innerWidth <= 576 ? 1 : 2,
                         borderRadius: tipo === 'bar' ? (window.innerWidth <= 576 ? 2 : 4) : 0,
-                        hoverOffset: window.innerWidth <= 576 ? 10 : 15
+                        hoverOffset: window.innerWidth <= 576 ? 10 : 15,
+                        // Animaciones específicas del dataset
+                        animation: {
+                            // Para gráficos de barras - animación desde abajo
+                            y: {
+                                type: 'number',
+                                from: tipo === 'bar' ? (ctx) => {
+                                    const chart = ctx.chart;
+                                    const {ctx: chartCtx, chartArea} = chart;
+                                    if (!chartArea) return;
+                                    return chartArea.bottom;
+                                } : NaN,
+                                duration: 1200,
+                                easing: 'easeOutQuart'
+                            },
+                            // Para gráficos circulares - animación de rotación
+                            rotate: tipo !== 'bar' ? {
+                                type: 'number',
+                                from: 0,
+                                to: 2 * Math.PI,
+                                duration: 1500,
+                                easing: 'easeOutQuart'
+                            } : undefined,
+                            // Para gráficos circulares - animación de escala
+                            scale: tipo !== 'bar' ? {
+                                type: 'number',
+                                from: 0,
+                                to: 1,
+                                duration: 1200,
+                                easing: 'easeOutBack'
+                            } : undefined
+                        }
                     }]
                 },
                 options: getResponsiveOptions(tipo)
@@ -427,6 +480,228 @@
             ajustarTextoBotones();
         }
 
+        // Función para crear gráfico con animación personalizada
+        function crearGraficoConAnimacion(tipo) {
+            const ctx = document.getElementById('graficoTipos').getContext('2d');
+            if (currentChart) {
+                currentChart.destroy();
+            }
+
+            // Configuración base
+            const config = {
+                type: tipo,
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: backgroundColors,
+                        borderColor: tipo === 'bar' ? backgroundColors.map(c => c + '80') : backgroundColors,
+                        borderWidth: window.innerWidth <= 576 ? 1 : 2,
+                        borderRadius: tipo === 'bar' ? (window.innerWidth <= 576 ? 2 : 4) : 0,
+                        hoverOffset: window.innerWidth <= 576 ? 10 : 15
+                    }]
+                },
+                options: getResponsiveOptions(tipo)
+            };
+
+            // Animaciones específicas por tipo de gráfico
+            switch(tipo) {
+                case 'bar':
+                    config.options.animation = {
+                        duration: 1200,
+                        easing: 'easeOutQuart',
+                        onProgress: function(animation) {
+                            // Animación progresiva para barras
+                            const chart = animation.chart;
+                            const ctx = chart.ctx;
+                            ctx.save();
+                        },
+                        onComplete: function(animation) {
+                            // Efecto al completar
+                            const chart = animation.chart;
+                            const ctx = chart.ctx;
+                            ctx.restore();
+                        }
+                    };
+                    break;
+
+                case 'pie':
+                case 'doughnut':
+                    config.options.animation = {
+                        animateRotate: true,
+                        animateScale: true,
+                        duration: 1500,
+                        easing: 'easeOutQuart'
+                    };
+                    break;
+
+                case 'polarArea':
+                    config.options.animation = {
+                        animateRotate: true,
+                        animateScale: true,
+                        duration: 1400,
+                        easing: 'easeOutBack'
+                    };
+                    break;
+            }
+
+            currentChart = new Chart(ctx, config);
+            ajustarTextoBotones();
+        }
+
+        // Función para crear gráfico con animación avanzada
+        function crearGraficoAnimado(tipo) {
+            const ctx = document.getElementById('graficoTipos').getContext('2d');
+            if (currentChart) {
+                currentChart.destroy();
+            }
+
+            const config = {
+                type: tipo,
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: backgroundColors,
+                        borderColor: tipo === 'bar' ? backgroundColors.map(c => c + '80') : backgroundColors,
+                        borderWidth: window.innerWidth <= 576 ? 1 : 2,
+                        borderRadius: tipo === 'bar' ? (window.innerWidth <= 576 ? 2 : 4) : 0,
+                        hoverOffset: window.innerWidth <= 576 ? 10 : 15
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: {
+                        duration: 2000,
+                        easing: 'easeOutElastic',
+                        delay: function(context) {
+                            return context.dataIndex * 150;
+                        }
+                    },
+                    transitions: {
+                        active: {
+                            animation: {
+                                duration: 500
+                            }
+                        },
+                        resize: {
+                            animation: {
+                                duration: 800
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: tipo !== 'bar',
+                            position: window.innerWidth <= 768 ? 'bottom' : 'right',
+                            labels: {
+                                padding: window.innerWidth <= 768 ? 10 : 20,
+                                usePointStyle: true,
+                                pointStyle: 'circle',
+                                font: {
+                                    size: window.innerWidth <= 480 ? 10 : (window.innerWidth <= 768 ? 11 : 12),
+                                    weight: '500'
+                                },
+                                boxWidth: window.innerWidth <= 768 ? 10 : 12
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleFont: {
+                                size: window.innerWidth <= 480 ? 12 : (window.innerWidth <= 768 ? 13 : 14),
+                                weight: 'bold'
+                            },
+                            bodyFont: {
+                                size: window.innerWidth <= 480 ? 11 : (window.innerWidth <= 768 ? 12 : 13)
+                            },
+                            padding: window.innerWidth <= 768 ? 8 : 12,
+                            cornerRadius: 6,
+                            callbacks: {
+                                label: function (context) {
+                                    const label = context.label || context.chart.data.labels[context.dataIndex] || 'Sin etiqueta';
+                                    let value = context.raw ?? context.parsed;
+                                    if (typeof value === 'object') {
+                                        value = value.y ?? value.x ?? 0;
+                                    }
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const porcentaje = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0';
+                                    return `${label}: ${value} (${porcentaje}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+
+            // Configuraciones específicas por tipo
+            if (tipo === 'bar') {
+                config.options.scales = {
+                    x: {
+                        beginAtZero: true,
+                        ticks: {
+                            display: !(window.innerWidth <= 768),
+                            font: {
+                                size: window.innerWidth <= 480 ? 10 : (window.innerWidth <= 768 ? 11 : 12),
+                                weight: 'bold'
+                            },
+                            color: '#333',
+                            maxRotation: window.innerWidth <= 768 ? 45 : 0
+                        },
+                        grid: { display: false }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            display: true,
+                            font: {
+                                size: window.innerWidth <= 480 ? 10 : (window.innerWidth <= 768 ? 11 : 12),
+                                weight: 'bold'
+                            },
+                            color: '#333'
+                        },
+                        grid: { display: !(window.innerWidth <= 480) }
+                    }
+                };
+            }
+
+            currentChart = new Chart(ctx, config);
+            ajustarTextoBotones();
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            ajustarAlturaContenedor();
+            // Usar la función con animaciones avanzadas
+            crearGraficoAnimado('bar');
+
+            document.querySelectorAll('[data-chart-type]').forEach(button => {
+                button.addEventListener('click', function () {
+                    document.querySelectorAll('[data-chart-type]').forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    // Cambiar a la función con animaciones
+                    crearGraficoAnimado(this.getAttribute('data-chart-type'));
+                });
+            });
+
+            if ('ontouchstart' in window) {
+                document.querySelectorAll('.btn-verde').forEach(btn => {
+                    btn.style.minHeight = '44px';
+                });
+            }
+
+            document.querySelectorAll('[title]').forEach(el => el.removeAttribute('title'));
+        });
+
+        window.addEventListener('resize', function () {
+            if (currentChart) {
+                currentChart.destroy();
+                const activeButton = document.querySelector('[data-chart-type].active');
+                crearGraficoAnimado(activeButton ? activeButton.getAttribute('data-chart-type') : 'bar');
+            }
+            ajustarAlturaContenedor();
+        });
+
+        // Resto de tus funciones existentes...
         function ajustarTextoBotones() {
             const buttons = document.querySelectorAll('.button-text');
             const isVerySmall = window.innerWidth <= 360;
@@ -470,37 +745,5 @@
                 graficoContainer.style.height = '500px';
             }
         }
-
-        document.addEventListener('DOMContentLoaded', function () {
-            ajustarAlturaContenedor();
-            crearGrafico('bar');
-
-            document.querySelectorAll('[data-chart-type]').forEach(button => {
-                button.addEventListener('click', function () {
-                    document.querySelectorAll('[data-chart-type]').forEach(btn => btn.classList.remove('active'));
-                    this.classList.add('active');
-                    crearGrafico(this.getAttribute('data-chart-type'));
-                });
-            });
-
-  
-            if ('ontouchstart' in window) {
-                document.querySelectorAll('.btn-verde').forEach(btn => {
-                    btn.style.minHeight = '44px';
-                });
-            }
-
-     
-            document.querySelectorAll('[title]').forEach(el => el.removeAttribute('title'));
-        });
-
-        window.addEventListener('resize', function () {
-            if (currentChart) {
-                currentChart.destroy();
-                const activeButton = document.querySelector('[data-chart-type].active');
-                crearGrafico(activeButton ? activeButton.getAttribute('data-chart-type') : 'bar');
-            }
-            ajustarAlturaContenedor();
-        });
     </script>
 }

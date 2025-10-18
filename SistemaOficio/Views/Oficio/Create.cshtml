@@ -291,6 +291,29 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <script>
+            $(document).ready(function () {
+            // Mostrar advertencia si existe
+            const warningMessage = '@Html.Raw(TempData["Warning"]?.ToString())';
+            const ValidacionMessage = '@Html.Raw(TempData["Validacion"]?.ToString())';
+            if (warningMessage) {
+                 Swal.fire({
+                     icon: "warning",
+                     title: "¡Atención!",
+                     text: warningMessage,
+                     confirmButtonText: "Entendido",
+                     confirmButtonColor: "#3D6FAD"
+                 });
+             } else if (ValidacionMessage) {
+                 Swal.fire({
+                     icon: "error",
+                     title: "¡Atención!",
+                     text: ValidacionMessage,
+                     confirmButtonText: "Entendido",
+                     confirmButtonColor: "#3D6FAD"
+                 });
+             }
+
+        // Variables de control
         let componentesInicializados = false;
         let enviandoFormulario = false;
 
@@ -354,39 +377,45 @@
             $('.selectpicker').selectpicker();
 
             // 2. Configuración de Summernote
-            $('#summernote').summernote({
-                lang: 'es-ES',
-                height: 400,
-                maxHeight: 400,
-                spellCheck: true,
-                toolbar: [
-                    ['style', ['bold', 'italic', 'underline', 'clear']],
-                    ['para', ['ul', 'ol', 'paragraph']],
-                    ['misc', ['undo', 'redo']]
-                ],
-                fontNames: ['Arial', 'Times New Roman', 'Verdana', 'Georgia'],
-                fontSizeUnits: ['px', 'pt'],
-                placeholder: 'Escriba el contenido del oficio aquí...',
-                disableDragAndDrop: true,
-                shortcuts: false,
-                callbacks: {
-                    onInit: function() {
-                        console.log('Editor inicializado');
-                        const editableElement = $('.note-editable');
-                        editableElement.attr('spellcheck', 'true');
-                        editableElement.attr('contenteditable', 'true');
-                    },
-                    onChange: function(contents) {
-                        const contenidoLimpio = limpiarHtmlCompatible(contents);
-                        $('input[name="Contenido"]').val(contenidoLimpio);
-                    },
-                    onPaste: function(e) {
-                        var bufferText = ((e.originalEvent || e).clipboardData || window.clipboardData).getData('Text');
-                        e.preventDefault();
-                        document.execCommand('insertText', false, bufferText);
+              $('#summernote').summernote({
+            lang: 'es-ES',
+            height: 400,
+            maxHeight: 400,
+            spellCheck: true,
+            toolbar: [
+                ['style', ['bold', 'italic', 'underline', 'clear']],
+                ['para', ['ul', 'ol', 'paragraph']],
+                ['misc', ['undo', 'redo']]
+            ],
+            fontNames: ['Arial', 'Times New Roman', 'Verdana', 'Georgia'],
+            fontSizeUnits: ['px', 'pt'],
+            placeholder: 'Escriba el contenido del oficio aquí...',
+            disableDragAndDrop: true,
+            shortcuts: false,
+            callbacks: {
+                onInit: function () {
+                    console.log('Editor inicializado');
+                    const editableElement = $('.note-editable');
+                    editableElement.attr('spellcheck', 'true');
+                    editableElement.attr('contenteditable', 'true');
+
+                    // ← Inyectar contenido del modelo si existe
+                    const contenidoInicial = $('input[name="Contenido"]').val();
+                    if (contenidoInicial) {
+                        $('#summernote').summernote('code', contenidoInicial);
                     }
+                },
+                onChange: function (contents) {
+                    const contenidoLimpio = limpiarHtmlCompatible(contents);
+                    $('input[name="Contenido"]').val(contenidoLimpio);
+                },
+                onPaste: function (e) {
+                    var bufferText = ((e.originalEvent || e).clipboardData || window.clipboardData).getData('Text');
+                    e.preventDefault();
+                    document.execCommand('insertText', false, bufferText);
                 }
-            });
+            }
+        });
 
             // 3. Configurar validación del formulario
             configurarValidacionFormulario();
@@ -565,7 +594,7 @@
             }
         }
 
-        $(document).ready(function () {
+
             // Inicializar componentes
             inicializarComponentes();
 

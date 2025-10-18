@@ -6,6 +6,7 @@
     var rolUsuario = Context.Session.GetString("RolUsuario");
 }
 
+
 <style>
 
     .bootstrap-select .dropdown-toggle {
@@ -108,53 +109,79 @@
         z-index: 10; /* Aumentar z-index para mayor seguridad */
         box-shadow: 0 2px 2px -1px rgba(0,0,0,0.1);
     }
+
+    .badge-pendiente {
+        background-color: #ffc107; /* Amarillo */
+        color: #212529;
+    }
+
+    .badge-recibido {
+        background-color: #28a745; /* Verde */
+        color: white;
+    }
 </style>
 
 <div class="container-fluid d-flex flex-column compact-container">
     <h4 class="mt-3 mb-3">Listado de Oficios</h4>
 
     <div class="card shadow-sm border-0 p-4 card-adjusted">
-
+        <!-- Filtros -->
         <div class="d-flex flex-wrap gap-3 align-items-end mb-3">
-      
-                <!-- Departamento destino -->
-                <div class="flex-grow-1">
-                    <label class="form-label">Departamento destino</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-building"></i></span>
-                        <select id="filtroDepartamento" asp-items="ViewBag.Departamentos" class="form-control selectpicker" data-size="5" data-live-search="true" title="Filtro de búsqueda">
-                            <option value="">Todos</option>
-                        </select>
-                    </div>
-                </div>
-
-
+            <!-- Departamento destino -->
             <div class="flex-grow-1">
-                <label class="form-label">Usuario</label>
+                <label for="filtroDepartamento" class="form-label">Departamento destino</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-building"></i></span>
+                    <select id="filtroDepartamento" asp-items="ViewBag.Departamentos" class="form-control selectpicker" data-size="5" data-live-search="true" title="Filtro de búsqueda">
+                        <option value="">Todos</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Usuario -->
+            <div class="flex-grow-1">
+                <label for="filtroUsuario" class="form-label">Usuario</label>
                 <div class="input-group">
                     <span class="input-group-text"><i class="bi bi-person-fill"></i></span>
                     <select id="filtroUsuario" asp-items="ViewBag.UsuariosFiltro" class="form-control selectpicker" data-size="5" data-live-search="true" title="Filtro de búsqueda">
                         <option value="">Todos</option>
                     </select>
                 </div>
-
             </div>
 
+            <!-- Asunto -->
             <div class="flex-grow-1">
-                <label class="form-label">Asunto</label>
+                <label for="filtroTipoOficio" class="form-label">Asunto</label>
                 <div class="input-group">
                     <span class="input-group-text"><i class="bi bi-journal-text"></i></span>
                     <select id="filtroTipoOficio" asp-items="ViewBag.TiposOficio" class="form-control selectpicker" data-size="5" data-live-search="true" title="Filtro de búsqueda">
                         <option value="">Todos</option>
                     </select>
                 </div>
-
             </div>
 
+            <!-- Estado (solo para Usuarios) -->
+            @if (rolUsuario == "Usuario")
+            {
+                <div class="flex-grow-1">
+                    <label for="filtroComunicacion" class="form-label">Comunicación</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-chat-dots"></i></span>
+                        <select id="filtroComunicacion" class="form-control selectpicker">
+                            <option value="">Todos</option>
+                            <option value="Pendiente">Solo Pendiente</option>
+                            <option value="Recibido">Solo Recibido</option>
+                        </select>
+                    </div>
+                </div>
+            }
+
+
+            <!-- Estado (solo para Administrador) -->
             @if (rolUsuario == "Administrador")
             {
                 <div class="flex-grow-1">
-                    <label class="form-label">Estado</label>  
+                    <label for="filtroEstado" class="form-label">Estado</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-toggle-on"></i></span>
                         <select id="filtroEstado" class="form-control selectpicker">
@@ -163,16 +190,17 @@
                             <option value="deshabilitado">Solo inactivos</option>
                         </select>
                     </div>
-
                 </div>
             }
 
+            <!-- Botón Exportar -->
             <div>
                 <label class="form-label d-block">&nbsp;</label>
                 <button id="btnExportarExcel" class="btn-excel" title="Exportar Excel">Exportar</button>
             </div>
         </div>
 
+        <!-- Tabla de resultados -->
         <div class="table-scroll mb-3">
             <table id="tablaOficios" class="table table-bordered table-striped align-middle mb-0 fixed-header">
                 <thead>
@@ -189,30 +217,33 @@
                         }
                         <th class="text-center">Acción</th>
                     </tr>
-
-
                 </thead>
                 <tbody>
                     @foreach (var oficio in Model)
                     {
                         var claseFila = oficio.Estado ? "" : "table-danger";
-
                         <tr class="@claseFila">
                             <td>@oficio.Codigo</td>
                             <td>@oficio.FechaCreacion.ToString("dd/MM/yyyy")</td>
                             <td>@oficio.NombreTipoOficio</td>
                             <td>@oficio.NombreUsuario @oficio.ApellidoUsuario</td>
                             <td>@oficio.DirigidoDepartamento</td>
-                            <td>Pendiente</td>
+                            <td data-search="@oficio.EstadoVisual">
+                                <span class="badge badge-estado @(oficio.EstadoVisual == "Pendiente" ? "badge-pendiente" : "badge-recibido")">
+                                    @(oficio.EstadoVisual)
+                                </span>
+                            </td>
                             @if (rolUsuario == "Administrador")
                             {
                                 <td>@(oficio.Estado ? "Activo" : "Deshabilitado")</td>
                             }
-                           
                             <td class="text-center d-flex justify-content-center gap-2">
-                                <a asp-controller="Oficio" asp-action="Edit" asp-route-id="@oficio.Id" class="btn btn-sm btn-outline-dark" title="Editar oficio">
-                                    <i class="bi bi-pencil-square"></i>
-                                </a>
+                                @if (oficio.EstadoVisual != "Recibido")
+                                {
+                                    <a asp-controller="Oficio" asp-action="Edit" asp-route-id="@oficio.Id" class="btn btn-sm btn-outline-dark" title="Editar oficio">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </a>
+                                }
                                 @if (oficio.Estado)
                                 {
                                     <a asp-controller="Oficio" asp-action="Details" asp-route-id="@oficio.Id" class="btn btn-sm btn-outline-dark" title="Descargar oficio">
@@ -226,6 +257,7 @@
             </table>
         </div>
 
+        <!-- Botón Crear oficio -->
         <div class="mt-auto">
             <a asp-controller="Oficio" asp-action="Create" class="btn btn-azul d-flex justify-content-center align-items-center gap-2 w-100">
                 CREAR OFICIOS
@@ -233,6 +265,7 @@
         </div>
     </div>
 </div>
+
 
 @section Scripts {
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
@@ -246,66 +279,97 @@
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
 
     <script>
-        // Variable global para controlar el estado de inicialización
         let componentesInicializados = false;
-        let tabla; // Variable global para la DataTable
+        let tabla;
 
         function inicializarComponentes() {
             if (componentesInicializados) {
-                return; // Ya están inicializados
+                return;
             }
 
-            // 1. Inicializar bootstrap-select PRIMERO
+            // 1. Inicializar bootstrap-select
             $('.selectpicker').selectpicker();
 
             // 2. Inicializar DataTable
-            tabla = $('#tablaOficios').DataTable({
-                language: {
-                    decimal: ",",
-                    thousands: ".",
-                    info: "Mostrando del _START_ al _END_ de _TOTAL_ registros",
-                    infoEmpty: "Mostrando 0 registros",
-                    infoFiltered: "(filtrado de _MAX_ registros totales)",
-                    lengthMenu: "Mostrar _MENU_ registros",
-                    loadingRecords: "Cargando...",
-                    processing: "Procesando...",
-                    search: "Buscar:",
-                    zeroRecords: "No se encontraron resultados",
-                    paginate: {
-                        first: "Primero",
-                        last: "Último",
-                        next: "Siguiente",
-                        previous: "Anterior"
-                    }
-                },
-                pageLength: 8,
-                order: [[0, 'desc']],
-                dom: 'tip',
-                autoWidth: false,
-                responsive: true
-            });
-
+        tabla = $('#tablaOficios').DataTable({
+            language: {
+                decimal: ",",
+                thousands: ".",
+                info: "Mostrando del _START_ al _END_ de _TOTAL_ registros",
+                infoEmpty: "Mostrando 0 registros",
+                infoFiltered: "(filtrado de _MAX_ registros totales)",
+                lengthMenu: "Mostrar _MENU_ registros",
+                loadingRecords: "Cargando...",
+                processing: "Procesando...",
+                search: "Buscar:",
+                zeroRecords: "No se encontraron resultados",
+                paginate: {
+                    first: "Primero",
+                    last: "Último",
+                    next: "Siguiente",
+                    previous: "Anterior"
+                }
+            },
+            pageLength: 8,
+            order: [[0, 'desc']],
+            dom: 'tip',
+            autoWidth: false,
+            responsive: true,
+            paging: true,
+            // Configuración específica para manejar estructura dinámica
+            columnDefs: [
+                {
+                    // Hacer que DataTables ignore diferencias en el conteo de columnas
+                    "targets": '_all',
+                    "searchable": true,
+                    "orderable": true
+                }
+            ],
+            // Deshabilitar la verificación estricta del conteo de columnas
+            initComplete: function(settings, json) {
+                console.log('DataTable inicializado correctamente');
+                console.log('Número de columnas detectadas:', this.api().columns().count());
+            }
+        });
             // 3. Configurar filtros
             function aplicarFiltros() {
             const usuario = $('#filtroUsuario').val()?.trim() || '';
             const departamento = $('#filtroDepartamento').val()?.trim() || '';
             const asunto = $('#filtroTipoOficio').val()?.trim() || '';
             const estado = $('#filtroEstado').val()?.trim().toLowerCase();
-            const tieneEstado = $('#tablaOficios thead th').length === 7;
+            const comunicacion = $('#filtroComunicacion').val()?.trim() || '';
 
-            // Aplicar filtros a las columnas correspondientes
-            tabla.columns(3).search(usuario); // Columna "Creado por"
-            tabla.columns(4).search(departamento); // Columna "Departamento destino"
-            tabla.columns(2).search(asunto); // Columna "Asunto"
+            const esAdministrador = $('#tablaOficios thead th').length === 8; // 7 columnas + columna Estado
 
-            // CORRECCIÓN: Manejar correctamente el filtro de estado
-            if (tieneEstado) {
+            // Determinar índices de columnas dinámicamente
+            const columnaComunicacion = 5; // Siempre en posición 5
+            const columnaEstado = 6; // Solo existe si es administrador
+            const columnaAccion = esAdministrador ? 7 : 6; // La columna acción es la última
+
+            // Aplicar filtros básicos (estos índices son fijos)
+            tabla.columns(0).search(''); // Código
+            tabla.columns(1).search(''); // Fecha
+            tabla.columns(2).search(asunto); // Asunto (índice 2)
+            tabla.columns(3).search(usuario); // Creado por (índice 3)
+            tabla.columns(4).search(departamento); // Departamento destino (índice 4)
+
+            // Filtro de comunicación (columna 5)
+            if (comunicacion === "Pendiente") {
+                tabla.columns(columnaComunicacion).search("^Pendiente$", true, false, true);
+            } else if (comunicacion === "Recibido") {
+                tabla.columns(columnaComunicacion).search("^Recibido$", true, false, true);
+            } else {
+                tabla.columns(columnaComunicacion).search('');
+            }
+
+            // Filtro de estado (solo para Administrador)
+            if (esAdministrador) {
                 if (estado === "activo") {
-                    tabla.columns(5).search("activo"); // Solo activos
+                    tabla.columns(columnaEstado).search("^Activo$", true, false, true);
                 } else if (estado === "deshabilitado") {
-                    tabla.columns(5).search("deshabilitado"); // Solo inactivos
+                    tabla.columns(columnaEstado).search("^Deshabilitado$", true, false, true);
                 } else {
-                    tabla.columns(5).search(''); // Mostrar todos (cuando es vacío o "todos")
+                    tabla.columns(columnaEstado).search('');
                 }
             }
 
@@ -313,7 +377,7 @@
         }
 
             // Event listeners para los filtros
-            $('#filtroUsuario, #filtroDepartamento, #filtroEstado, #filtroTipoOficio')
+            $('#filtroUsuario, #filtroDepartamento, #filtroEstado, #filtroTipoOficio, #filtroComunicacion')
                 .on('changed.bs.select', aplicarFiltros);
 
             // 4. Configurar exportación Excel
@@ -337,21 +401,21 @@
             }
 
             const filas = tabla.rows({ search: 'applied' }).nodes().toArray();
-            const tieneEstado = $('#tablaOficios thead th').length === 7;
+            const tieneEstadoAdmin = $('#tablaOficios thead th').length === 8;
 
-            // Filtrar solo activos si existe columna de estado
-            let activos = filas;
-            if (tieneEstado) {
-                activos = filas.filter(row => {
-                    const estadoTexto = $(row.cells[5]).text().trim().toLowerCase();
+            // Filtrar solo activos si existe columna de estado y es administrador
+            let datosExportar = filas;
+            if (tieneEstadoAdmin) {
+                datosExportar = filas.filter(row => {
+                    const estadoTexto = $(row.cells[6]).text().trim().toLowerCase();
                     return estadoTexto === "activo";
                 });
             }
 
-            if (activos.length === 0) {
+            if (datosExportar.length === 0) {
                 Swal.fire({
                     title: "Exportación cancelada",
-                    text: "No hay oficios activos filtrados para exportar.",
+                    text: "No hay oficios para exportar con los filtros actuales.",
                     icon: "warning",
                     confirmButtonText: "Entendido",
                     confirmButtonColor: "#3D6FAD"
@@ -361,7 +425,7 @@
 
             Swal.fire({
                 title: "Confirmar exportación",
-                text: `Se exportarán ${activos.length} oficios activos. ¿Deseas continuar?`,
+                text: `Se exportarán ${datosExportar.length} oficios. ¿Deseas continuar?`,
                 icon: "warning",
                 showCancelButton: true,
                 confirmButtonText: "Sí, Exportar",
@@ -374,7 +438,7 @@
                     $btn.prop('disabled', true);
 
                     try {
-                        generarArchivoExcel(activos, tieneEstado);
+                        generarArchivoExcel(datosExportar, tieneEstadoAdmin);
                     } catch (error) {
                         console.error('Error al exportar Excel:', error);
                         Swal.fire({
@@ -391,27 +455,24 @@
             });
         }
 
-        function generarArchivoExcel(activos, tieneEstado) {
+        function generarArchivoExcel(datosExportar, tieneEstadoAdmin) {
             // Preparar datos para Excel
             const datos = [];
 
             // Encabezados
-            const headers = ["Código", "Fecha", "Asunto", "Creado por", "Departamento destino"];
-            if (tieneEstado) headers.push("Estado");
+            const headers = ["Código", "Fecha", "Asunto", "Creado por", "Departamento destino", "Comunicación"];
             datos.push(headers);
 
             // Datos de las filas
-            activos.forEach(row => {
+            datosExportar.forEach(row => {
                 const fila = [
                     $(row.cells[0]).text().trim(), // Código
                     $(row.cells[1]).text().trim(), // Fecha
                     $(row.cells[2]).text().trim(), // Asunto
                     $(row.cells[3]).text().trim(), // Creado por
-                    $(row.cells[4]).text().trim()  // Departamento destino
+                    $(row.cells[4]).text().trim(), // Departamento destino
+                    $(row.cells[5]).text().trim()  // Comunicación
                 ];
-                if (tieneEstado) {
-                    fila.push($(row.cells[5]).text().trim()); // Estado
-                }
                 datos.push(fila);
             });
 
@@ -425,24 +486,23 @@
                 { wch: 12 }, // Fecha
                 { wch: 30 }, // Asunto
                 { wch: 25 }, // Creado por
-                { wch: 25 }  // Departamento destino
+                { wch: 25 }, // Departamento destino
+                { wch: 15 }  // Comunicación
             ];
-            if (tieneEstado) anchosColumnas.push({ wch: 12 }); // Estado
 
             hojaExcel['!cols'] = anchosColumnas;
 
-            XLSX.utils.book_append_sheet(libro, hojaExcel, "OficiosActivos");
+            XLSX.utils.book_append_sheet(libro, hojaExcel, "Oficios");
 
             // Generar nombre de archivo con fecha
             const fechaActual = new Date();
             const fechaFormateada = fechaActual.toISOString().slice(0, 10).replace(/-/g, '');
-            const nombreArchivo = `OficiosActivos_${fechaFormateada}.xlsx`;
+            const nombreArchivo = `Oficios_${fechaFormateada}.xlsx`;
 
             // Descargar archivo
             XLSX.writeFile(libro, nombreArchivo);
         }
 
-        // NUEVA FUNCIÓN: Descargar PDF automáticamente después de crear oficio
         function descargarPdfAutomatico() {
             const oficioCreadoId = '@TempData["OficioCreadoId"]';
 
@@ -457,13 +517,10 @@
                     // Descargar el PDF en una nueva pestaña
                     window.open(urlDescarga, '_blank');
 
-               
                     // Limpiar el TempData del lado del cliente
-                    // Esto evita que se descargue múltiples veces al recargar la página
         @{
             TempData.Remove("OficioCreadoId");
         }
-
                 }, 1000);
             }
         }
@@ -511,7 +568,7 @@
                 mostrarMensajesTempData();
             }, 100);
 
-            // NUEVO: Ejecutar descarga automática de PDF si es necesario
+            // Ejecutar descarga automática de PDF si es necesario
             setTimeout(() => {
                 descargarPdfAutomatico();
             }, 1500);
@@ -520,31 +577,11 @@
         // Función para re-inicializar componentes si es necesario
         function reinicializarComponentes() {
             if (componentesInicializados) {
-                // Solo refrescar si es necesario
                 $('.selectpicker').selectpicker('refresh');
-
                 if (tabla && $.fn.DataTable.isDataTable('#tablaOficios')) {
                     tabla.draw();
                 }
             }
         }
-
-        // Prevenir interferencia con notificaciones
-        // Esta función evita que las notificaciones afecten los selectpicker
-        function protegerSelectores() {
-            // Asegurar que los selectpicker mantengan su estado
-            $(document).on('DOMNodeInserted', function(e) {
-                // Si se detecta actividad de notificaciones, proteger los selects
-                if ($(e.target).hasClass('notificacion-item-usuario') ||
-                    $(e.target).closest('.dropdown-notificaciones-usuario').length) {
-                    // No hacer nada - dejar que los selectpicker permanezcan intactos
-                }
-            });
-        }
-
-        // Ejecutar protección al cargar
-        $(function() {
-            protegerSelectores();
-        });
     </script>
 }

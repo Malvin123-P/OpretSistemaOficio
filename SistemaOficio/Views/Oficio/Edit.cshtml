@@ -430,42 +430,44 @@
 
             // 4. Configuración de Summernote
             $('#summernote').summernote({
-                lang: 'es-ES',
-                height: altura,
-                maxHeight: altura,
-                spellCheck: true,
-                toolbar: [
-                    ['style', ['bold', 'italic', 'underline', 'clear']],
-                    ['para', ['ul', 'ol', 'paragraph']],
-                    ['misc', ['undo', 'redo']]
-                ],
-                fontNames: ['Arial', 'Times New Roman', 'Verdana', 'Georgia'],
-                fontSizeUnits: ['px', 'pt'],
-                placeholder: 'Escriba el contenido del oficio aquí...',
-                disableDragAndDrop: true,
-                shortcuts: false,
-                callbacks: {
-                    onInit: function() {
-                        console.log('Editor inicializado');
-                        const editableElement = $('.note-editable');
-                        editableElement.attr('spellcheck', 'true');
-                        editableElement.attr('contenteditable', 'true');
+            lang: 'es-ES',
+            height: 400,
+            maxHeight: 400,
+            spellCheck: true,
+            toolbar: [
+                ['style', ['bold', 'italic', 'underline', 'clear']],
+                ['para', ['ul', 'ol', 'paragraph']],
+                ['misc', ['undo', 'redo']]
+            ],
+            fontNames: ['Arial', 'Times New Roman', 'Verdana', 'Georgia'],
+            fontSizeUnits: ['px', 'pt'],
+            placeholder: 'Escriba el contenido del oficio aquí...',
+            disableDragAndDrop: true,
+            shortcuts: false,
+            callbacks: {
+                onInit: function () {
+                    console.log('Editor inicializado');
+                    const editableElement = $('.note-editable');
+                    editableElement.attr('spellcheck', 'true');
+                    editableElement.attr('contenteditable', 'true');
 
-                        if (contenidoOriginal) {
-                            $('#summernote').summernote('code', contenidoOriginal);
-                        }
-                    },
-                    onChange: function(contents) {
-                        const contenidoLimpio = limpiarHtmlCompatible(contents);
-                        $('input[name="Contenido"]').val(contenidoLimpio);
-                    },
-                    onPaste: function(e) {
-                        var bufferText = ((e.originalEvent || e).clipboardData || window.clipboardData).getData('Text');
-                        e.preventDefault();
-                        document.execCommand('insertText', false, bufferText);
+                    // ← Inyectar contenido del modelo si existe
+                    const contenidoInicial = $('input[name="Contenido"]').val();
+                    if (contenidoInicial) {
+                        $('#summernote').summernote('code', contenidoInicial);
                     }
+                },
+                onChange: function (contents) {
+                    const contenidoLimpio = limpiarHtmlCompatible(contents);
+                    $('input[name="Contenido"]').val(contenidoLimpio);
+                },
+                onPaste: function (e) {
+                    var bufferText = ((e.originalEvent || e).clipboardData || window.clipboardData).getData('Text');
+                    e.preventDefault();
+                    document.execCommand('insertText', false, bufferText);
                 }
-            });
+            }
+        });
 
             // 5. Configurar validación del formulario
             configurarValidacionFormulario();

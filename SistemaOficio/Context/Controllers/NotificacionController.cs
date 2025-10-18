@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace OfiGest.Context.Controllers
 {
-    [Authorize]
+    [Authorize(Roles = "Administrador,Usuario")]
     public class NotificacionController : Controller
     {
         private readonly NotificacionManager _notificacionManager;

@@ -71,6 +71,12 @@ namespace OfiGest.Models
         [Display(Name = "Departamento dirigido")]
         public string DirigidoDepartamento { get; set; } = string.Empty;
 
-      
+        [Display(Name = "Tiene Notificaciones Pendientes")]
+        public bool TieneNotificacionesPendientes { get; set; }
+
+        [Display(Name = "Estado")]
+        public string EstadoVisual { get; set; } = "Pendiente";
+
+
     }
 }
